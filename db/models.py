@@ -1,14 +1,32 @@
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime
+import uuid
 
-Base = declarative_base()
+class UserProfile(BaseModel):
+    id: uuid.UUID
+    discordId: str
+    discordUsername: Optional[str] = None
+    discordDiscriminator: Optional[str] = None
+    discordAvatar: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    discord_id = Column(String, unique=True, index=True)
+class Character(BaseModel):
+    characterId: int
+    userId: Optional[str] = None
+    name: str
+    series: str
+    imageUrl: str
+    kakeraValue: int
+    addedAt: datetime
+    claimedAt: Optional[datetime] = None
+    displayOrder: int = 0
+    orderUpdatedAt: Optional[datetime] = None
 
-class Character(Base):
-    __tablename__ = "characters"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+class Wishlist(BaseModel):
+    id: Optional[int] = None
+    userId: str
+    characterId: int
+    addedAt: Optional[datetime] = None
+    notes: Optional[str] = None

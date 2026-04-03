@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends, WebSocket
+from fastapi import FastAPI, Depends, WebSocket, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
 from db.database import get_db
+from db.models import Character, UserProfile
 from dotenv import load_dotenv
 
 load_dotenv()

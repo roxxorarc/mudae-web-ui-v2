@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-sqlalchemy
-asyncpg
+supabase
 python-dotenv
 discord.py
+pydantic

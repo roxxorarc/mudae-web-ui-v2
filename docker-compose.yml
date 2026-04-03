@@ -1,0 +1,45 @@
+services:
+  backend-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_DB_URL=${SUPABASE_DB_URL}
+    volumes:
+      - ./api:/app/api
+      - ./db:/app/db
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  discord-bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_DB_URL=${SUPABASE_DB_URL}
+    volumes:
+      - ./bot:/app/bot
+      - ./db:/app/db
+    command: python -m bot.main
+
+  frontend-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - CI=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    # Using sh to ensure native packages (like rolldown/esbuild) install properly to the local container
+    command: sh -c "pnpm install --config.confirmModulesPurge=false && pnpm run dev --host"

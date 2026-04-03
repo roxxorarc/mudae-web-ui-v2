@@ -1,0 +1,28 @@
+# Dependencies & Build
+node_modules/
+pnpm-lock.yaml
+package-lock.yaml
+dist/
+dist-ssr/
+build/
+.pnpm-store/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git
+.git/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+*.swp

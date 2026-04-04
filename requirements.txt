@@ -4,3 +4,4 @@ supabase
 python-dotenv
 discord.py
 pydantic
+httpx

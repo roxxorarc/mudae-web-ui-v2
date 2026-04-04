@@ -50,6 +50,31 @@ class MudaeEvents(commands.Cog):
         self.give_handler = GiveHandler(config)
 
     @commands.Cog.listener()
+    async def on_message_edit(self, _before: discord.Message, after: discord.Message):
+        # - $mmi navigation (⬅️➡️): same embed edited with a new character each page turn
+        if after.author.id != MUDAE_BOT_ID:
+            return
+
+        if not after.embeds:
+            return
+
+        channel_name = after.channel.name if hasattr(after.channel, 'name') else after.channel.id
+        logger.debug(f"[MUDAE EDIT] Channel: {channel_name} | Embeds: {len(after.embeds)}")
+
+        # Run character detection on the updated embed
+        try:
+            await handle_mudae_message(after)
+        except Exception as e:
+            logger.error(f"[MUDAE LISTENER on_edit] Exception: {e}", exc_info=True)
+
+        # Run event handlers on the updated message (claim edits may trigger marriage)
+        for handler in (self.marriage_handler, self.divorce_handler, self.trade_handler, self.give_handler):
+            try:
+                await handler.process(after)
+            except Exception as e:
+                logger.error(f"[{handler.__class__.__name__} on_edit] Exception: {e}", exc_info=True)
+
+    @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         # Handle $changeimg from any user
         if message.content.startswith("$changeimg"):

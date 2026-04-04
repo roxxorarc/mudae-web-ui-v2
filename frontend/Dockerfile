@@ -7,7 +7,15 @@ COPY package.json ./
 RUN npm install && npm cache clean --force
 
 COPY . .
-RUN npm run build
+
+ARG SUPA_URL
+ARG SUPA_ANON
+ARG API_URL
+
+RUN VITE_SUPABASE_URL=$SUPA_URL \
+    VITE_SUPABASE_ANON_KEY=$SUPA_ANON \
+    VITE_API_URL=$API_URL \
+    npm run build
 
 # Production stage
 FROM node:20-alpine

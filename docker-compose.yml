@@ -29,12 +29,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        SUPA_URL: ${VITE_SUPABASE_URL}
+        SUPA_ANON: ${VITE_SUPABASE_ANON_KEY}
+        API_URL: ${VITE_API_URL}
     expose:
       - "5175"
-    environment:
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
-      - VITE_API_URL=${VITE_API_URL}
     restart: unless-stopped
     depends_on:
       - backend-api

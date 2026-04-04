@@ -150,7 +150,7 @@ async def _save_character(
     try:
         logger.debug(f"[MUDAE LISTENER] Saving character {name} (type: {message_type})")
         result = supabase.table("Characters").select("*").eq("characterId", int(character_id)).maybe_single().execute()
-        existing = result.data
+        existing = getattr(result, "data", None) if result else None
 
         if existing:
             logger.debug(f"[MUDAE LISTENER] Character exists in DB: {name}")

@@ -1,63 +1,92 @@
-import os
+import re
 import logging
 
 import discord
 import httpx
 
+from db.database import supabase
 from bot.utils.patterns import MUDAE_BOT_ID, CHANGEIMG_PATTERN
 
 logger = logging.getLogger("MudaeBot")
 
+MUDAE_IMAGE_URL = "https://mudae.net/character/{character_id}"
+IMG_TAG_RE = re.compile(
+    r'<section[^>]*id=["\']images["\'][^>]*>.*?<ul[^>]*>(.*?)</ul>.*?</section>',
+    re.IGNORECASE | re.DOTALL,
+)
+SRC_RE = re.compile(r'<img[^>]+src=["\']([^"\']+)["\']', re.IGNORECASE)
+
+
+async def _fetch_character_images(character_id: int) -> list[str]:
+    url = MUDAE_IMAGE_URL.format(character_id=character_id)
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; MudaeWebUI/1.0)"}, follow_redirects=True)
+        response.raise_for_status()
+    html = response.text
+    section_match = IMG_TAG_RE.search(html)
+    if not section_match:
+        return []
+    ul_content = section_match.group(1)
+    images = []
+    for src in SRC_RE.findall(ul_content):
+        absolute = src if src.startswith("http") else f"https://mudae.net{src}"
+        images.append(absolute)
+    return images
+
 
 async def handle_changeimg_command(message: discord.Message) -> None:
     if message.author.id == MUDAE_BOT_ID:
-        logger.debug("[CHANGEIMG] Ignoring message from Mudae bot")
         return
 
     match = CHANGEIMG_PATTERN.match(message.content)
     if not match:
-        logger.debug(f"[CHANGEIMG] Pattern did not match: {message.content}")
         return
 
     character_name = match.group(1).strip()
     img_number = int(match.group(2))
 
-    logger.info(f"[CHANGEIMG] Processing $changeimg command: character=\"{character_name}\", imgNumber={img_number}, user={message.author.name}")
-
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY")
+    logger.info(f"[CHANGEIMG] character=\"{character_name}\" imgNumber={img_number} user={message.author.name}")
 
     try:
-        logger.info(f"\U0001f310 Calling Supabase edge function for character: {character_name}")
+        result = supabase.table("Characters") \
+            .select("characterId, name, imageUrl") \
+            .ilike("name", character_name) \
+            .execute()
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{supabase_url}/functions/v1/change-character-image",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {supabase_anon_key}",
-                },
-                json={
-                    "characterName": character_name,
-                    "imgNumber": img_number,
-                },
-            )
+        characters = result.data or []
+        if not characters:
+            logger.warning(f"[CHANGEIMG] Character \"{character_name}\" not found in DB")
+            await message.add_reaction("❌")
+            return
 
-        if response.status_code != 200:
-            try:
-                error_data = response.json()
-            except Exception:
-                error_data = {"error": "Unknown error"}
-            raise Exception(f"Edge function error: {response.status_code} - {error_data.get('error', response.reason_phrase)}")
+        if len(characters) > 1:
+            logger.warning(f"[CHANGEIMG] Multiple characters matched \"{character_name}\": {len(characters)}")
+            await message.add_reaction("❌")
+            return
 
-        result = response.json()
+        character = characters[0]
+        character_id = character["characterId"]
+        logger.debug(f"[CHANGEIMG] Found character: {character['name']} (ID: {character_id})")
 
-        if result.get("success"):
-            logger.info(f"\U0001f5bc\ufe0f Successfully changed image for {character_name} to {img_number}")
-            await message.add_reaction("\U0001f44c")
-        else:
-            logger.warning(f"\u26a0\ufe0f Edge function reported failure: {result.get('message', 'Unknown reason')}")
-            await message.add_reaction("\u274c")
+        images = await _fetch_character_images(character_id)
+        logger.debug(f"[CHANGEIMG] Found {len(images)} images for character")
+
+        if not images:
+            logger.warning(f"[CHANGEIMG] No images found for character {character_id}")
+            await message.add_reaction("❌")
+            return
+
+        if img_number < 1 or img_number > len(images):
+            logger.warning(f"[CHANGEIMG] Invalid image number {img_number}, available: 1-{len(images)}")
+            await message.add_reaction("❌")
+            return
+
+        new_image_url = images[img_number - 1]
+        supabase.table("Characters").update({"imageUrl": new_image_url}).eq("characterId", character_id).execute()
+
+        logger.info(f"[CHANGEIMG] Updated {character['name']} → image {img_number}: {new_image_url}")
+        await message.add_reaction("👌")
+
     except Exception as e:
-        logger.error(f"\u274c Error handling $changeimg command: {e}")
-        await message.add_reaction("\u274c")
+        logger.error(f"[CHANGEIMG] Error: {e}", exc_info=True)
+        await message.add_reaction("❌")

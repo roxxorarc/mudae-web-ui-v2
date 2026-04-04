@@ -6,7 +6,8 @@ This is a complete rewrite of a previous version I made last year completely in 
 
 No intermediate API is required since the frontend communicates directly with the Supabase database and the bot automatically synchronizes Mudae activities into the database.
 
-I used Supabase for its integration of Discord auth and database but I plan to make a version that can be self-hosted without Supabase in the future, which is why I have added an Api/ folder.
+I used Supabase for its integration of Discord auth and database but I plan to make a version that can be self-hosted without Supabase in the future, which is why I have added the api/ and db/ folders.
+
 ---
 
 ## 📋 Prerequisites
@@ -35,6 +36,8 @@ Go to the **SQL Editor** in your Supabase dashboard and run the SQL files locate
 2. Enable **Discord**.
 3. You will need your Discord **Client ID** and **Client Secret** (from Step 2).
 4. Copy the **Redirect URI** provided by Supabase (e.g., `https://<YOUR_REF>.supabase.co/auth/v1/callback`).
+5. Paste this Redirect URI into the Discord Developer Portal (Step 2) when setting up your OAuth2 credentials.
+6. Go to Supabase **Authentication** > **Settings** and set the "Site URL" to your frontend URL (e.g., `http://localhost:5175` for local development).
 
 ---
 

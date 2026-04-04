@@ -5,7 +5,6 @@ import './App.css'
 
 function App() {
   const [session, setSession] = useState<Session | null>(null)
-  const [apiStatus, setApiStatus] = useState<string>('Loading...')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -20,30 +19,6 @@ function App() {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  useEffect(() => {
-    const fetchApiStatus = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'  
-        const headers: Record<string, string> = {}
-        
-        if (session?.access_token) {
-          headers['Authorization'] = `Bearer ${session.access_token}`
-        }
-
-        const response = await fetch(`${apiUrl}/api/health`, { headers })
-        if (response.ok) {
-          setApiStatus('API Connected')
-        } else {
-          setApiStatus('API Error')
-        }
-      } catch (error) {
-        setApiStatus(`API Error: ${(error as Error).message}`)
-      }
-    }
-
-    fetchApiStatus()
-  }, [session])
 
   const signInWithDiscord = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -70,11 +45,6 @@ function App() {
           <button onClick={signInWithDiscord} className="discord-btn">Login with Discord</button>
         )}
       </header>
-
-      <main className="content">
-        <p>API Status: {apiStatus}</p>
-        {!session && <p>Please login to see your Mudae characters!</p>}
-      </main>
     </div>
   )
 }

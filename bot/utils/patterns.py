@@ -22,17 +22,18 @@ MARRIAGE_PATTERNS = [
 # ============================================================================
 # DETECTION PATTERNS - DIVORCES
 # ============================================================================
-DIVORCE_PATTERN = re.compile(r"(?:💔\s*)?(.+?)\s+sont maintenant divorcés", re.IGNORECASE)
+DIVORCE_PATTERN = re.compile(r"(?:💔\s*)?(.+?)\s+(?:sont maintenant divorcés|are now divorced)", re.IGNORECASE)
 
 # ============================================================================
 # DETECTION PATTERNS - TRADES
 # ============================================================================
-TRADE_PATTERN = re.compile(r"(?:🤝\s*)?L['’]échange est terminé\s*:\s*(.+?)\s+vs\s+(.+?)(?:\s*\(|\s*$)", re.IGNORECASE)
+_APOS = "[\x27\u2018\u2019]"  # ASCII apostrophe + left/right single quotes
+TRADE_PATTERN = re.compile(f"(?:🤝\\s*)?(?:L{_APOS}échange est terminé|The trade is done)\\s*:\\s*(.+?)\\s+vs\\s+(.+?)(?:\\s*\\(|\\s*$)", re.IGNORECASE)
 
 # ============================================================================
 # DETECTION PATTERNS - GIFTS (DONATIONS)
 # ============================================================================
-GIVE_PATTERN = re.compile(r"\*\*(.+?)\*\*\s+donné à\s+<@!?(\d+)>", re.IGNORECASE)
+GIVE_PATTERN = re.compile(r"\*\*(.+?)\*\*\s+(?:donné à|given to)\s+<@!?(\d+)>", re.IGNORECASE)
 
 # ============================================================================
 # DETECTION PATTERNS - CHANGEIMG

@@ -41,7 +41,7 @@ class TradeHandler(MudaeEventHandler):
 
     def _parse_character_names(self, text: str) -> list[str]:
         text = text.replace("**", "")
-        parts = re.split(r'(?:,\s*|\s+et\s+)', text, flags=re.IGNORECASE)
+        parts = re.split(r'(?:,\s*|\s+(?:et|and)\s+)', text, flags=re.IGNORECASE)
         return [self.clean_name(s) for s in parts if self.clean_name(s)]
 
     async def _process_trade_swap(

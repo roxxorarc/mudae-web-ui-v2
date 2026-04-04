@@ -29,7 +29,7 @@ class DivorceHandler(MudaeEventHandler):
 
             # Parse "**Char1**, **Char2** et **username**"
             raw_text = match.group(1).replace("**", "").strip()
-            parts = re.split(r'\s+et\s+', raw_text, flags=re.IGNORECASE)
+            parts = re.split(r'\s+(?:et|and)\s+', raw_text, flags=re.IGNORECASE)
 
             if len(parts) < 2:
                 continue

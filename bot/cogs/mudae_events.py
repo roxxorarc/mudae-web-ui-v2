@@ -12,9 +12,24 @@ from bot.utils.trade_handler import TradeHandler
 from bot.utils.give_handler import GiveHandler
 from bot.utils.changeimg_handler import handle_changeimg_command
 from bot.utils.patterns import MUDAE_BOT_ID
+from db.database import supabase
+import uuid
 
 logger = logging.getLogger("MudaeBot")
 
+def _ensure_user_profile(user_id: str, username: str | None = None) -> None:
+    if not user_id: return
+    try:
+        res = supabase.table("user_profiles").select("discordId").eq("discordId", user_id).maybe_single().execute()
+        existing = getattr(res, "data", None) if res else None
+        if not existing:
+            supabase.table("user_profiles").insert({
+                "id": str(uuid.uuid4()),
+                "discordId": user_id,
+                "discordUsername": username or "Unknown"
+            }).execute()
+    except Exception as e:
+        logger.warning(f"Failed to ensure user_profile for {user_id}: {e}")
 
 class MudaeEvents(commands.Cog):
     """Cog that dispatches Mudae bot messages to the appropriate handlers."""
@@ -69,6 +84,10 @@ class MudaeEvents(commands.Cog):
 
         # Event handlers (marriage, divorce, trade, give)
         logger.debug("[MUDAE HANDLERS] Processing event handlers (marriage, divorce, trade, give)")
+        if message.mentions:
+            for mention in message.mentions:
+                _ensure_user_profile(str(mention.id), mention.name)
+                
         for handler in (self.marriage_handler, self.divorce_handler, self.trade_handler, self.give_handler):
             try:
                 await handler.process(message)

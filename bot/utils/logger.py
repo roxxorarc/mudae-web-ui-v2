@@ -3,7 +3,7 @@ import sys
 
 def setup_logger():
     logger = logging.getLogger("MudaeBot")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
         '%(asctime)s | %(levelname)-8s | %(message)s',

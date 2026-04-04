@@ -29,7 +29,8 @@ from db.database import supabase
 
 load_dotenv()
 logger = logging.getLogger("MudaeBot")
-
+### Note: This script is intended for one-time use when the kakeraValue of characters was not being set properly
+### Always back up your database before running scripts that modify data.
 
 def normalize(s: str) -> str:
     """Normalize a string for comparison: strip diacritics, lowercase, remove punctuation."""

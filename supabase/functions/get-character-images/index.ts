@@ -1,9 +1,13 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// Cache TTL: 7 days in milliseconds
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,16 +15,39 @@ serve(async (req) => {
   }
 
   try {
-    // body is sent as JSON by supabase.functions.invoke
-    const { characterId } = await req.json() as { characterId?: string }
+    const { characterId } = (await req.json()) as { characterId?: string }
 
     if (!characterId) {
       return json({ error: 'Missing characterId' }, 400)
     }
 
-    const mudaeUrl = `https://mudae.net/character/${characterId}`
-    console.log(`[get-character-images] fetching ${mudaeUrl}`)
+    // Use service role key for DB access — JWT was already verified by Supabase
+    // before reaching this function (verify_jwt = true in config).
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
 
+    // --- Cache read ---
+    const { data: cached } = await supabase
+      .from('character_images_cache')
+      .select('images, cached_at')
+      .eq('characterId', characterId)
+      .maybeSingle()
+
+    if (cached) {
+      const age = Date.now() - new Date(cached.cached_at).getTime()
+      if (age < CACHE_TTL_MS) {
+        console.log(`[get-character-images] cache hit for ${characterId} (age ${Math.round(age / 3600000)}h)`)
+        return json({ characterId, images: cached.images, count: cached.images.length, cached: true })
+      }
+      console.log(`[get-character-images] cache stale for ${characterId}, re-fetching`)
+    } else {
+      console.log(`[get-character-images] cache miss for ${characterId}`)
+    }
+
+    // --- Fetch from mudae.net ---
+    const mudaeUrl = `https://mudae.net/character/${characterId}`
     const response = await fetch(mudaeUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -30,71 +57,42 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error(`[get-character-images] mudae.net returned ${response.status}`)
+      // Return stale cache if available rather than an empty response
+      if (cached) {
+        return json({ characterId, images: cached.images, count: cached.images.length, cached: true, stale: true })
+      }
       return json({ images: [], error: `mudae.net ${response.status}` })
     }
 
     const html = await response.text()
-    console.log(`[get-character-images] HTML length: ${html.length}`)
-    console.log(`[get-character-images] Final URL (after redirects): ${response.url}`)
-
-    // Dump raw HTML for inspection
-    console.log(`[get-character-images] === HTML DUMP (first 3000 chars) ===`)
-    console.log(html.slice(0, 3000))
-    console.log(`[get-character-images] === HTML DUMP (3000-6000) ===`)
-    console.log(html.slice(3000, 6000))
-
-    // Log all id= attributes found in the page
-    const allIds = [...html.matchAll(/\bid=["']([^"']+)["']/gi)].map(m => m[1])
-    console.log(`[get-character-images] All id= found: ${JSON.stringify(allIds)}`)
-
-    // Log all img src found anywhere in the page
-    const allImgs = [...html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)].map(m => m[1])
-    console.log(`[get-character-images] All img src found: ${JSON.stringify(allImgs)}`)
-
     const images: string[] = []
 
-    // Find the start position of id="images" — avoids nested-tag regex failures
     const sectionStart = html.search(/\bid=["']images["']/i)
-    console.log(`[get-character-images] #images position in HTML: ${sectionStart}`)
-
-    if (sectionStart === -1) {
-      console.log(`[get-character-images] #images NOT found`)
-    } else {
-      // Take a large slice starting from the #images attribute.
-      // Large enough to capture all images in the section.
+    if (sectionStart !== -1) {
       const slice = html.slice(sectionStart, sectionStart + 100_000)
-      console.log(`[get-character-images] slice around #images (first 1000): ${slice.slice(0, 1000)}`)
-
-      // Find the opening <ul> inside this slice
       const ulStart = slice.search(/<ul[\s>]/i)
-      console.log(`[get-character-images] <ul> position within slice: ${ulStart}`)
-
-      if (ulStart === -1) {
-        console.log(`[get-character-images] no <ul> found inside #images slice`)
-      } else {
-        // Find the closing </ul> — search from ulStart
+      if (ulStart !== -1) {
         const ulClose = slice.indexOf('</ul>', ulStart)
-        console.log(`[get-character-images] </ul> position within slice: ${ulClose}`)
-
-        const ulContent = ulClose === -1
-          ? slice.slice(ulStart)           // no closing tag — take everything
-          : slice.slice(ulStart, ulClose)
-
-        console.log(`[get-character-images] ul content length: ${ulContent.length}`)
-        console.log(`[get-character-images] ul content (first 1000): ${ulContent.slice(0, 1000)}`)
-
+        const ulContent = ulClose === -1 ? slice.slice(ulStart) : slice.slice(ulStart, ulClose)
         const imgRe = /<img[^>]+src=["']([^"']+)["'][^>]*/gi
         let m
         while ((m = imgRe.exec(ulContent)) !== null) {
           const src = m[1]
-          const abs = src.startsWith('http') ? src : `https://mudae.net${src}`
-          images.push(abs)
+          images.push(src.startsWith('http') ? src : `https://mudae.net${src}`)
         }
       }
     }
 
-    console.log(`[get-character-images] found ${images.length} images: ${JSON.stringify(images)}`)
-    return json({ characterId, images, count: images.length })
+    console.log(`[get-character-images] found ${images.length} images for ${characterId}`)
+
+    // --- Cache write (upsert) ---
+    if (images.length > 0) {
+      await supabase
+        .from('character_images_cache')
+        .upsert({ characterId, images, cached_at: new Date().toISOString() })
+    }
+
+    return json({ characterId, images, count: images.length, cached: false })
 
   } catch (error) {
     console.error('[get-character-images] error:', error)

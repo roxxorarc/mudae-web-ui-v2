@@ -28,10 +28,34 @@ Before starting, ensure you have the following installed and set up:
 
 ### 2. Execute Database Migrations
 Go to the **SQL Editor** in your Supabase dashboard and run the SQL files located in `db/migrations/` in sequential order:
-1. Run `001_initial_schema.sql` (Creates `user_profiles`, `Characters`, `Wishlist`, and relations).
-2. Run `002_auth_trigger.sql` (Creates the trigger to auto-create user profiles when claiming via bot or logging in via the web).
+1. `001_initial_schema.sql` — Creates `user_profiles`, `Characters`, `Wishlist` tables and indexes.
+2. `002_auth_trigger.sql` — Creates the trigger to auto-create user profiles on Discord OAuth login or bot claim.
+3. `003_character_images_cache.sql` — Creates the `character_images_cache` table used by the edge function to cache scraped image lists from mudae.net (7-day TTL, avoids redundant fetches).
 
-### 3. Set Up Discord Authentication
+### 3. Deploy Edge Functions
+The frontend uses a Supabase Edge Function to scrape character image galleries from mudae.net server-side (bypassing hotlink protection) and cache results in the database, you can either use Supabase CLI or the dashboard to deploy it.
+
+1. Using the CLI
+Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and link your project:
+```bash
+npm install -g supabase
+supabase login
+supabase link --project-ref <YOUR_PROJECT_REF>
+```
+
+Deploy the function:
+```bash
+supabase functions deploy get-character-images
+```
+
+2. Using the Dashboard
+- Go to **Functions** in the Supabase dashboard.
+- Click **New Function** and name it `get-character-images`.
+- Paste the code from `api/get-character-images/index.ts` into the function editor.
+
+> **Note:** The function requires `verify_jwt = true` (already set in `supabase/config.toml`), so only authenticated users can call it. The Supabase client in the frontend automatically attaches the user's session JWT — no extra configuration needed.
+
+### 4. Set Up Discord Authentication
 1. Go to **Authentication** > **Providers** in Supabase.
 2. Enable **Discord**.
 3. You will need your Discord **Client ID** and **Client Secret** (from Step 2).

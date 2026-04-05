@@ -1,52 +1,58 @@
-import { useState, useEffect } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from './supabase'
-import './App.css'
+import { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './auth';
+import { StoreProvider } from './store';
+import { Layout } from './components/Layout';
+import { GridSkeleton } from './components/SkeletonLoader';
 
-function App() {
-  const [session, setSession] = useState<Session | null>(null)
+const Home           = lazy(() => import('./pages/HomePage'));
+const Collection     = lazy(() => import('./pages/CollectionPage'));
+const Wishlist       = lazy(() => import('./pages/WishlistPage'));
+const CharacterDetail= lazy(() => import('./pages/CharacterDetailPage'));
+const CharacterOrder = lazy(() => import('./pages/CharacterOrderPage'));
+const Users          = lazy(() => import('./pages/UsersPage'));
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+const Loader = () => (
+  <div className="max-w-screen-2xl mx-auto px-4 py-12">
+    <GridSkeleton count={24} />
+  </div>
+);
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const signInWithDiscord = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'discord',
-    })
-    if (error) console.error("Error logging in:", error.message)
-  }
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) console.error("Error signing out:", error.message)
-  }
-
-  return (
-    <div className="App">
-      <header className="header">
-        <h1>Mudae Web UI</h1>
-        {session ? (
-          <div className="user-profile">
-            <span>Welcome, {session.user.user_metadata?.full_name || session.user.email}</span>
-            <button onClick={signOut}>Sign Out</button>
-          </div>
-        ) : (
-          <button onClick={signInWithDiscord} className="discord-btn">Login with Discord</button>
-        )}
-      </header>
-    </div>
-  )
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  return user ? <>{children}</> : <Navigate to="/" replace />;
 }
 
-export default App
+function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="collection" element={<Collection />} />
+            <Route path="user/:userId" element={<Collection />} />
+            <Route path="wishlist" element={<Wishlist />} />
+            <Route path="wishlist/:userId" element={<Wishlist />} />
+            <Route path="users" element={<Users />} />
+            <Route path="character/:characterId" element={<CharacterDetail />} />
+            <Route
+              path="character-order"
+              element={<AuthGate><CharacterOrder /></AuthGate>}
+            />
+          </Route>
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <StoreProvider>
+        <AppRoutes />
+      </StoreProvider>
+    </AuthProvider>
+  );
+}

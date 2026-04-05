@@ -1,0 +1,2 @@
+[functions.get-character-images]
+verify_jwt = false

@@ -260,6 +260,25 @@ class TestEnglishTrade:
         assert table.update.call_count == 2
 
     @pytest.mark.asyncio
+    async def test_english_exchange_is_over_trade(self, supabase_mock):
+        guild = _guild_with([
+            FakeMember("alice", "100"),
+            FakeMember("bob", "200"),
+        ])
+        msg = FakeMessage("🤝 The exchange is over: **Char1** vs **Char2**", guild)
+
+        table = _setup_trade_db(
+            supabase_mock,
+            left_data=[{"name": "Char1", "userId": "100"}],
+            right_data=[{"name": "Char2", "userId": "200"}],
+        )
+
+        handler = _make_handler()
+        await handler.handle(msg)
+
+        assert table.update.call_count == 2
+
+    @pytest.mark.asyncio
     async def test_english_multi_trade_with_and(self, supabase_mock):
         guild = _guild_with([
             FakeMember("alice", "100"),

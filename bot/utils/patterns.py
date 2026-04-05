@@ -28,7 +28,10 @@ DIVORCE_PATTERN = re.compile(r"(?:💔\s*)?(.+?)\s+(?:sont maintenant divorcés|
 # DETECTION PATTERNS - TRADES
 # ============================================================================
 _APOS = "[\x27\u2018\u2019]"  # ASCII apostrophe + left/right single quotes
-TRADE_PATTERN = re.compile(f"(?:🤝\\s*)?(?:L{_APOS}échange est terminé|The trade is done)\\s*:\\s*(.+?)\\s+vs\\s+(.+?)(?:\\s*\\(|\\s*$)", re.IGNORECASE)
+TRADE_PATTERN = re.compile(
+    f"(?:🤝\\s*)?(?:L{_APOS}échange est terminé|The trade is done|The exchange is over|The trade is over)\\s*:\\s*(.+?)\\s+vs\\s+(.+?)(?:\\s*\\(|\\s*$)",
+    re.IGNORECASE,
+)
 
 # ============================================================================
 # DETECTION PATTERNS - GIFTS (DONATIONS)

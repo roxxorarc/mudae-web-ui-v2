@@ -158,24 +158,24 @@ class TestTradePattern:
     # --- English ---
 
     def test_english_single_trade(self):
-        text = "🤝 The trade is done: **Char1** vs **Char2**"
+        text = "🤝 The exchange is over: **Char1** vs **Char2**"
         m = TRADE_PATTERN.search(text)
         assert m is not None
 
     def test_english_multi_trade(self):
-        text = "🤝 The trade is done: **Char1**, **Char2** vs **Char3**, **Char4** (info)"
+        text = "🤝 The exchange is over: **Char1**, **Char2** vs **Char3**, **Char4** (info)"
         m = TRADE_PATTERN.search(text)
         assert m is not None
 
     def test_english_trade_capture_groups(self):
-        text = "🤝 The trade is done: **Saber** vs **Rem**"
+        text = "🤝 The exchange is over: **Saber** vs **Rem**"
         m = TRADE_PATTERN.search(text)
         assert m is not None
         assert "Saber" in m.group(1)
         assert "Rem" in m.group(2)
 
     def test_english_multi_trade_with_and(self):
-        text = "🤝 The trade is done: **Char1** and **Char2** vs **Char3** and **Char4**"
+        text = "🤝 The exchange is over: **Char1** and **Char2** vs **Char3** and **Char4**"
         m = TRADE_PATTERN.search(text)
         assert m is not None
 

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import discord
 
-from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig
+from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
 from bot.utils.patterns import MARRIAGE_PATTERNS
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
 
@@ -49,6 +49,12 @@ class MarriageHandler(MudaeEventHandler):
 
         user_id = self.find_member_by_name(message.guild, username)
         if not user_id:
+            return
+
+        if not ensure_user_profile(user_id, username):
+            logger.warning(
+                f"{LOG_EMOJIS['warning']} Could not upsert user_profile for {username} ({user_id}), skipping marriage update"
+            )
             return
 
         try:

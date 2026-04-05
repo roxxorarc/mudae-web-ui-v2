@@ -28,7 +28,7 @@ Before starting, ensure you have the following installed and set up:
 
 ### 2. Execute Database Migrations
 Go to the **SQL Editor** in your Supabase dashboard and run the SQL files located in `db/migrations/` in sequential order:
-1. `001_initial_schema.sql` — Creates `user_profiles`, `Characters`, `Wishlist` tables and indexes.
+1. `001_initial_schema.sql` — Creates `user_profiles`, `Characters`, `Wishlist` tables and indexes, and allows bot-created profiles for Discord users who never authenticated.
 2. `002_auth_trigger.sql` — Creates the trigger to auto-create user profiles on Discord OAuth login or bot claim.
 3. `003_character_images_cache.sql` — Creates the `character_images_cache` table used by the edge function to cache scraped image lists from mudae.net (7-day TTL, avoids redundant fetches).
 
@@ -132,4 +132,8 @@ docker-compose logs -f frontend
 ## 📜 Architecture & Automation Notes
 
 - **Users:** When a user interacts with the Mudae bot (marries/claims) or logs into the web UI via Discord OAuth, their profile is securely upserted into the PostgreSQL `user_profiles` table using Supabase triggers. No manual sign-up is required.
-- **Constraints:** The bot gracefully pre-ensures user profile existence (`_ensure_user_profile`) before validating the relation `characters_userid_fkey` constraint to prevent database transaction errors.
+- **Constraints:** The bot pre-ensures profile existence (`ensure_user_profile`) before writing ownership to `Characters.userId`, and the base schema allows placeholder `user_profiles` rows for non-authenticated Discord members.
+- **Edge Function Caching:** The `get-character-images` edge function caches scraped image lists for each character in the `character_images_cache` table with a 7-day TTL, minimizing redundant scraping of mudae.net and improving frontend performance.
+
+- **Kakera fill script** Script to backfill kakera values for characters with kakeraValue = 0
+

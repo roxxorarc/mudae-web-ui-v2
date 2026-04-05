@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import discord
 
 from bot.utils.patterns import MUDAE_BOT_ID, CHARACTER_PATTERNS
+from bot.utils.mudae_event_handler import ensure_user_profile
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
 from db.database import supabase
 
@@ -161,6 +162,12 @@ async def _save_character(
             logger.debug(f"[MUDAE LISTENER] Processing roll update for {name}")
             await _update_roll_character(existing, name, image_url, kakera_value, character_id)
             return
+
+        if owner_id and not ensure_user_profile(owner_id):
+            logger.warning(
+                f"[MUDAE LISTENER] Could not upsert user_profile for owner {owner_id}; saving {name} as unowned"
+            )
+            owner_id = None
 
         await _upsert_character(
             character_id=character_id,

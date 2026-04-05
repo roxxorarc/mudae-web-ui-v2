@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 import discord
 
-from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig
+from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
 from bot.utils.patterns import GIVE_PATTERN
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
 
@@ -37,6 +37,12 @@ class GiveHandler(MudaeEventHandler):
             logger.info(f"{LOG_EMOJIS['give']} {LOG_MESSAGES.give.detected(character_name, to_username)}")
 
             try:
+                if not ensure_user_profile(to_user_id, to_username):
+                    logger.warning(
+                        f"{LOG_EMOJIS['warning']} Could not upsert user_profile for {to_username} ({to_user_id}), skipping give update"
+                    )
+                    return
+
                 now = datetime.now(timezone.utc).isoformat()
                 result = self.db.table("Characters").update({
                     "userId": to_user_id,

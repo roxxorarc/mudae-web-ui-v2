@@ -1,9 +1,9 @@
 """Tests for the base MudaeEventHandler class."""
 import pytest
-from types import SimpleNamespace
+from unittest.mock import patch
 
-from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig
-from bot.tests.conftest import FakeMember, FakeGuild, FakeMessage, FakeEmbed
+from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
+from bot.tests.conftest import FakeMember, FakeGuild, FakeMessage, FakeEmbed, make_db_response
 
 
 class _StubHandler(MudaeEventHandler):
@@ -14,6 +14,30 @@ class _StubHandler(MudaeEventHandler):
 
     async def handle(self, message) -> None:
         self.handled = True
+
+
+class TestEnsureUserProfile:
+    def test_returns_true_if_profile_exists(self, supabase_mock):
+        table = supabase_mock.table.return_value
+        table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value = make_db_response(
+            {"discordId": "100"}
+        )
+
+        assert ensure_user_profile("100", "alice") is True
+        table.insert.assert_not_called()
+
+    def test_inserts_and_returns_true_if_profile_missing(self, supabase_mock):
+        table = supabase_mock.table.return_value
+        table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value = make_db_response(None)
+
+        assert ensure_user_profile("100", "alice") is True
+        table.insert.assert_called_once()
+
+    def test_returns_false_if_upsert_raises(self, supabase_mock):
+        table = supabase_mock.table.return_value
+        table.select.return_value.eq.return_value.maybe_single.return_value.execute.side_effect = Exception("boom")
+
+        assert ensure_user_profile("100", "alice") is False
 
 
 class TestExtractTextSources:
@@ -80,6 +104,15 @@ class TestFindMemberByName:
         guild = FakeGuild([FakeMember("alice", "100")])
         handler = _StubHandler(EventConfig(channel_ids=[]))
         assert handler.find_member_by_name(guild, "unknown") is None
+
+    def test_member_lookup_has_no_side_effects(self):
+        guild = FakeGuild([FakeMember("alice", "100")])
+        handler = _StubHandler(EventConfig(channel_ids=[]))
+
+        with patch("bot.utils.mudae_event_handler.ensure_user_profile") as ensure_mock:
+            assert handler.find_member_by_name(guild, "alice") == "100"
+
+        ensure_mock.assert_not_called()
 
 
 class TestProcess:

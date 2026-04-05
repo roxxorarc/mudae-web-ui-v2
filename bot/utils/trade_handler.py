@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import discord
 
-from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig
+from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
 from bot.utils.patterns import TRADE_PATTERN
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
 
@@ -84,6 +84,18 @@ class TradeHandler(MudaeEventHandler):
         logger.info(f"{LOG_EMOJIS['trade']} {LOG_MESSAGES.trade.detected(left_user, left_char_names, right_user, right_char_names)}")
 
         now = datetime.now(timezone.utc).isoformat()
+
+        if not ensure_user_profile(left_owner_id, str(left_user)):
+            logger.warning(
+                f"{LOG_EMOJIS['warning']} Could not upsert user_profile for trade owner {left_user} ({left_owner_id}), skipping trade"
+            )
+            return False
+
+        if not ensure_user_profile(right_owner_id, str(right_user)):
+            logger.warning(
+                f"{LOG_EMOJIS['warning']} Could not upsert user_profile for trade owner {right_user} ({right_owner_id}), skipping trade"
+            )
+            return False
 
         # Swap owners (sequential - supabase doesn't support transactions via client)
         self.db.table("Characters").update({

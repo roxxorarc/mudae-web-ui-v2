@@ -2,15 +2,14 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS public.user_profiles (
-  id uuid NOT NULL,
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
   "discordId" text NOT NULL UNIQUE,
   "discordUsername" character varying,
   "discordDiscriminator" character varying,
   "discordAvatar" character varying,
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT user_profiles_pkey PRIMARY KEY (id),
-  CONSTRAINT user_profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+  CONSTRAINT user_profiles_pkey PRIMARY KEY (id)
 );
 
 

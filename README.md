@@ -1,7 +1,5 @@
 # Mudae Web UI (v2)
 
-A web interface and complementary Discord bot for organizing, claiming, and trading Mudae characters.
-
 This is a complete rewrite of a previous version I made last year completely in TypeScript for my friends group. This new version is designed to be more robust and "editable" 
 
 No intermediate API is required since the frontend communicates directly with the Supabase database and the bot automatically synchronizes Mudae activities into the database.

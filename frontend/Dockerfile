@@ -30,4 +30,4 @@ USER node
 
 EXPOSE 5175
 
-CMD ["serve", "-s", "dist", "-l", "5175"]
+CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:5175"]

@@ -6,6 +6,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from bot.utils.logger import setup_logger
+from db.pool import open_pool, close_pool
 
 load_dotenv()
 
@@ -52,12 +53,17 @@ async def main():
         logger.error("No DISCORD_TOKEN found in your environment.")
         return
 
+    await open_pool()
+    logger.info("Database pool ready")
+
     try:
         await bot.start(token)
     except discord.errors.HTTPException as e:
         logger.error(f"Failed to connect to Discord: {e}")
     except Exception as e:
         logger.error(f"Error starting the bot: {e}")
+    finally:
+        await close_pool()
 
 
 if __name__ == "__main__":

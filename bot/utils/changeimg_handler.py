@@ -4,7 +4,7 @@ import logging
 import discord
 import httpx
 
-from db.database import supabase
+from db import repository
 from bot.utils.patterns import MUDAE_BOT_ID, CHANGEIMG_PATTERN
 
 logger = logging.getLogger("MudaeBot")
@@ -48,12 +48,7 @@ async def handle_changeimg_command(message: discord.Message) -> None:
     logger.info(f"[CHANGEIMG] character=\"{character_name}\" imgNumber={img_number} user={message.author.name}")
 
     try:
-        result = supabase.table("Characters") \
-            .select("characterId, name, imageUrl") \
-            .ilike("name", character_name) \
-            .execute()
-
-        characters = result.data or []
+        characters = await repository.find_characters_ilike(character_name)
         if not characters:
             logger.warning(f"[CHANGEIMG] Character \"{character_name}\" not found in DB")
             await message.add_reaction("❌")
@@ -82,7 +77,7 @@ async def handle_changeimg_command(message: discord.Message) -> None:
             return
 
         new_image_url = images[img_number - 1]
-        supabase.table("Characters").update({"imageUrl": new_image_url}).eq("characterId", character_id).execute()
+        await repository.update_character(character_id, imageUrl=new_image_url)
 
         logger.info(f"[CHANGEIMG] Updated {character['name']} → image {img_number}: {new_image_url}")
         await message.add_reaction("👌")

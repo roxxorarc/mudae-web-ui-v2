@@ -6,6 +6,7 @@ import discord
 from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig
 from bot.utils.patterns import DIVORCE_PATTERN
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
+from db import repository
 
 logger = logging.getLogger("MudaeBot")
 
@@ -59,12 +60,7 @@ class DivorceHandler(MudaeEventHandler):
         try:
             logger.info(f"{LOG_EMOJIS['divorce']} {LOG_MESSAGES.divorce.detected(username, character_names)}")
 
-            result = self.db.table("Characters").update({
-                "userId": None,
-                "claimedAt": None,
-            }).eq("userId", user_id).in_("name", character_names).execute()
-
-            count = len(result.data) if result.data else 0
+            count = await repository.clear_owner(user_id, character_names)
             if count > 0:
                 logger.info(f"{LOG_EMOJIS['success']} {LOG_MESSAGES.divorce.updated(count, username)}")
         except Exception as e:

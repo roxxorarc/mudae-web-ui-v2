@@ -7,7 +7,7 @@ import discord
 from bot.utils.patterns import MUDAE_BOT_ID, CHARACTER_PATTERNS
 from bot.utils.mudae_event_handler import ensure_user_profile
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
-from db.database import supabase
+from db import repository
 
 logger = logging.getLogger("MudaeBot")
 
@@ -150,8 +150,7 @@ async def _save_character(
 ) -> None:
     try:
         logger.debug(f"[MUDAE LISTENER] Saving character {name} (type: {message_type})")
-        result = supabase.table("Characters").select("*").eq("characterId", int(character_id)).maybe_single().execute()
-        existing = getattr(result, "data", None) if result else None
+        existing = await repository.get_character(int(character_id))
 
         if existing:
             logger.debug(f"[MUDAE LISTENER] Character exists in DB: {name}")
@@ -163,7 +162,7 @@ async def _save_character(
             await _update_roll_character(existing, name, image_url, kakera_value, character_id)
             return
 
-        if owner_id and not ensure_user_profile(owner_id):
+        if owner_id and not await ensure_user_profile(owner_id):
             logger.warning(
                 f"[MUDAE LISTENER] Could not upsert user_profile for owner {owner_id}; saving {name} as unowned"
             )
@@ -199,7 +198,7 @@ async def _update_roll_character(
         updates["kakeraValue"] = kakera_value
 
     if updates:
-        supabase.table("Characters").update(updates).eq("characterId", int(character_id)).execute()
+        await repository.update_character(int(character_id), **updates)
 
         changes = []
         if "kakeraValue" in updates:
@@ -234,7 +233,7 @@ async def _upsert_character(
     if not existing:
         data["addedAt"] = now
 
-    supabase.table("Characters").upsert(data, on_conflict="characterId").execute()
+    await repository.upsert_character(data)
 
     if log_changes and existing:
         changes = []

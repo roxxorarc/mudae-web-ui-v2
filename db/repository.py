@@ -119,7 +119,7 @@ async def get_characters_by_names(names: list[str]) -> list[dict]:
 
 
 async def find_characters_ilike(name: str) -> list[dict]:
-    """Case-insensitive exact name match (supabase .ilike without wildcards)."""
+    """Case-insensitive exact name match."""
     async with get_pool().connection() as conn:
         cur = await conn.execute(
             f'SELECT {CHARACTER_COLUMNS} FROM public."Characters" WHERE name ILIKE %s',
@@ -229,6 +229,14 @@ async def set_display_order(
     return count
 
 
+async def list_zero_kakera_characters() -> list[dict]:
+    async with get_pool().connection() as conn:
+        cur = await conn.execute(
+            'SELECT "characterId", name FROM public."Characters" WHERE "kakeraValue" = 0'
+        )
+        return await cur.fetchall()
+
+
 # ── Users ─────────────────────────────────────────────────────
 
 
@@ -242,13 +250,15 @@ async def get_user_profile(discord_id: str) -> dict | None:
         return await cur.fetchone()
 
 
-async def ensure_user_profile(discord_id: str, username: str | None = None) -> None:
+async def ensure_user_profile(discord_id: str, username: str | None = None) -> bool:
+    """Create the profile if missing. Returns True when a row was inserted."""
     async with get_pool().connection() as conn:
-        await conn.execute(
+        cur = await conn.execute(
             'INSERT INTO public.user_profiles ("discordId", "discordUsername") '
             'VALUES (%s, %s) ON CONFLICT ("discordId") DO NOTHING',
             (discord_id, username or "Unknown"),
         )
+        return cur.rowcount > 0
 
 
 async def upsert_user_profile(

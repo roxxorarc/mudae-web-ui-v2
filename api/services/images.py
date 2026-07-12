@@ -1,8 +1,7 @@
 """Character image gallery scraper with DB cache.
 
-Port of the former Supabase edge function get-character-images:
-check character_images_cache (7-day TTL), on miss scrape
-https://mudae.net/character/{id} and upsert the cache.
+Checks character_images_cache (7-day TTL); on miss scrapes
+https://mudae.net/character/{id} and upserts the cache.
 """
 
 import logging

@@ -1,20 +1,19 @@
 """
 Shared fixtures for bot tests.
-Mocks discord objects and the supabase client so handlers can be tested
-without network access.
+Mocks discord objects and the data layer (db.repository) so handlers can be
+tested without network or database access.
 """
-import sys
+import os
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# Patch db.database *before* any handler import touches it
-# ---------------------------------------------------------------------------
-_fake_supabase = MagicMock(name="supabase")
-sys.modules.setdefault("db", SimpleNamespace(database=SimpleNamespace(supabase=_fake_supabase)))
-sys.modules.setdefault("db.database", SimpleNamespace(supabase=_fake_supabase))
+# Must be set before db.pool is imported (handlers import db.repository).
+# The pool is created lazily (open=False) so no connection is attempted.
+os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost:5432/test")
+
+import db.repository as repository  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -70,14 +69,44 @@ class FakeEmbed:
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+_REPO_FUNCTIONS = [
+    "get_character",
+    "list_characters",
+    "list_user_characters",
+    "get_characters_by_names",
+    "find_characters_ilike",
+    "upsert_character",
+    "update_character",
+    "set_owner_by_names",
+    "clear_owner",
+    "swap_owners",
+    "set_display_order",
+    "list_zero_kakera_characters",
+    "get_user_profile",
+    "ensure_user_profile",
+    "upsert_user_profile",
+]
+
+
 @pytest.fixture()
-def supabase_mock():
-    """Return a fresh MagicMock that replaces supabase in handler .db property."""
-    mock = MagicMock(name="supabase")
-    with patch("bot.utils.mudae_event_handler.supabase", mock):
-        yield mock
+def repo_mock(monkeypatch):
+    """Replace every db.repository function used by the bot with an AsyncMock.
 
+    Handlers call `repository.<fn>(...)` (module attribute lookup at call
+    time), so patching the module attributes covers all of them.
+    """
+    mock = SimpleNamespace()
+    for name in _REPO_FUNCTIONS:
+        fn = AsyncMock(name=f"repository.{name}")
+        setattr(mock, name, fn)
+        monkeypatch.setattr(repository, name, fn)
 
-def make_db_response(data: list[dict] | None = None):
-    """Helper to build a fake supabase response."""
-    return SimpleNamespace(data=data or [])
+    # Sensible defaults matching common test setups
+    mock.ensure_user_profile.return_value = False  # profile already existed
+    mock.get_character.return_value = None
+    mock.get_characters_by_names.return_value = []
+    mock.find_characters_ilike.return_value = []
+    mock.set_owner_by_names.return_value = 1
+    mock.clear_owner.return_value = 1
+    mock.update_character.return_value = 1
+    return mock

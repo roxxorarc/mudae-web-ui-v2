@@ -1,6 +1,5 @@
 fastapi
 uvicorn[standard]
-supabase
 python-dotenv
 discord.py
 pydantic

@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch
 
 from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
-from bot.tests.conftest import FakeMember, FakeGuild, FakeMessage, FakeEmbed, make_db_response
+from bot.tests.conftest import FakeMember, FakeGuild, FakeMessage, FakeEmbed
 
 
 class _StubHandler(MudaeEventHandler):
@@ -17,27 +17,29 @@ class _StubHandler(MudaeEventHandler):
 
 
 class TestEnsureUserProfile:
-    def test_returns_true_if_profile_exists(self, supabase_mock):
-        table = supabase_mock.table.return_value
-        table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value = make_db_response(
-            {"discordId": "100"}
-        )
+    @pytest.mark.asyncio
+    async def test_returns_true_if_profile_exists(self, repo_mock):
+        repo_mock.ensure_user_profile.return_value = False  # nothing inserted
 
-        assert ensure_user_profile("100", "alice") is True
-        table.insert.assert_not_called()
+        assert await ensure_user_profile("100", "alice") is True
+        repo_mock.ensure_user_profile.assert_awaited_once_with("100", "alice")
 
-    def test_inserts_and_returns_true_if_profile_missing(self, supabase_mock):
-        table = supabase_mock.table.return_value
-        table.select.return_value.eq.return_value.maybe_single.return_value.execute.return_value = make_db_response(None)
+    @pytest.mark.asyncio
+    async def test_creates_and_returns_true_if_profile_missing(self, repo_mock):
+        repo_mock.ensure_user_profile.return_value = True  # row inserted
 
-        assert ensure_user_profile("100", "alice") is True
-        table.insert.assert_called_once()
+        assert await ensure_user_profile("100", "alice") is True
 
-    def test_returns_false_if_upsert_raises(self, supabase_mock):
-        table = supabase_mock.table.return_value
-        table.select.return_value.eq.return_value.maybe_single.return_value.execute.side_effect = Exception("boom")
+    @pytest.mark.asyncio
+    async def test_returns_false_if_upsert_raises(self, repo_mock):
+        repo_mock.ensure_user_profile.side_effect = Exception("boom")
 
-        assert ensure_user_profile("100", "alice") is False
+        assert await ensure_user_profile("100", "alice") is False
+
+    @pytest.mark.asyncio
+    async def test_returns_false_for_empty_user_id(self, repo_mock):
+        assert await ensure_user_profile("", "alice") is False
+        repo_mock.ensure_user_profile.assert_not_awaited()
 
 
 class TestExtractTextSources:
@@ -117,7 +119,7 @@ class TestFindMemberByName:
 
 class TestProcess:
     @pytest.mark.asyncio
-    async def test_wrong_channel_skips(self, supabase_mock):
+    async def test_wrong_channel_skips(self):
         handler = _StubHandler(EventConfig(channel_ids=["111"]))
         msg = FakeMessage("test", FakeGuild([]), channel_id="999")
 
@@ -125,7 +127,7 @@ class TestProcess:
         assert not handler.handled
 
     @pytest.mark.asyncio
-    async def test_non_mudae_author_skips(self, supabase_mock):
+    async def test_non_mudae_author_skips(self):
         handler = _StubHandler(EventConfig(channel_ids=["111"]))
         msg = FakeMessage("test", FakeGuild([]), author_id="999")
 
@@ -133,7 +135,7 @@ class TestProcess:
         assert not handler.handled
 
     @pytest.mark.asyncio
-    async def test_valid_message_calls_handle(self, supabase_mock):
+    async def test_valid_message_calls_handle(self):
         handler = _StubHandler(EventConfig(channel_ids=["111"]))
         msg = FakeMessage("test", FakeGuild([]))
 

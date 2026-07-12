@@ -3,6 +3,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "127.0.0.1:5175:5175"
+    # No host port: Dokploy/Traefik routes to the container port directly
+    # (5175). Add a domain in Dokploy targeting service frontend-web:5175.
+    expose:
+      - "5175"
     restart: unless-stopped

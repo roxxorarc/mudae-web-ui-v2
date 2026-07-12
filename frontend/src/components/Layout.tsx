@@ -21,7 +21,7 @@ function NavItem({ to, label, end }: { to: string; label: string; end?: boolean 
 }
 
 function UserMenu() {
-  const { profile, signIn, signOut } = useAuth();
+  const { profile, signIn } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -67,7 +67,7 @@ function UserMenu() {
           <div className="absolute right-0 mt-2 w-52 bg-panel border border-line rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50 animate-fade-in">
             <div className="px-4 py-3 border-b border-line">
               <p className="text-sm font-bold text-ink truncate">{name}</p>
-              <p className="text-xs text-muted truncate">Discord</p>
+              <p className="text-xs text-muted truncate">Demo session — nothing is saved</p>
             </div>
             <div className="py-1">
               <MenuBtn
@@ -79,13 +79,6 @@ function UserMenu() {
                 icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>}
                 label="Reorder characters"
                 onClick={() => { navigate('/character-order'); setOpen(false); }}
-              />
-              <div className="border-t border-line my-1" />
-              <MenuBtn
-                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>}
-                label="Sign out"
-                danger
-                onClick={() => { signOut(); setOpen(false); }}
               />
             </div>
           </div>
@@ -120,6 +113,9 @@ export function Layout() {
               MUDAE
             </span>
             <span className="font-display text-xs text-kakera font-semibold mt-0.5 hidden sm:block">UI</span>
+            <span className="ml-1 px-1.5 py-0.5 rounded border border-gold/50 bg-gold/10 text-gold font-mono text-[10px] font-bold tracking-wider">
+              DEMO
+            </span>
           </NavLink>
 
           <nav className="flex items-center self-stretch">

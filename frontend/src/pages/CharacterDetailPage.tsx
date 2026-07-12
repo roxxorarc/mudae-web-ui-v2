@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchCharacterById, fetchWishers, fetchUserProfile } from '../db';
-import { apiFetch } from '../api';
+import { fetchCharacterById, fetchCharacterImages, fetchWishers, fetchUserProfile } from '../db';
 import { useStore } from '../store';
 import type { Character } from '../types';
 import { getRarity, RARITY } from '../types';
@@ -73,8 +72,8 @@ export default function CharacterDetailPage() {
       // Load gallery images
       if (c?.characterId) {
         setImagesLoading(true);
-        apiFetch<{ images?: string[] }>(`/api/characters/${c.characterId}/images`)
-          .then(data => { if (data?.images) setImages(data.images); })
+        fetchCharacterImages(c.characterId)
+          .then(setImages)
           .catch(() => {})
           .finally(() => setImagesLoading(false));
       }

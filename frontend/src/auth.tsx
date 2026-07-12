@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { apiFetch, apiUrl } from './api';
-import { buildAvatarUrl } from './db';
+// Demo auth: the visitor is always signed in as the demo user.
+// signIn/signOut are no-ops — this build has no backend.
+import { createContext, useContext } from 'react';
+import { DEMO_USER_ID, DEMO_USERS } from './demo/data';
 
 interface UserProfile {
-  discordId: string;  // Discord snowflake ID
+  discordId: string;
   discordUsername?: string;
   discordAvatar?: string;
 }
@@ -17,34 +18,22 @@ interface AuthCtx {
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
+const demoUser = DEMO_USERS.find(u => u.discordId === DEMO_USER_ID)!;
+
+const DEMO_CTX: AuthCtx = {
+  profile: {
+    discordId: demoUser.discordId,
+    discordUsername: demoUser.discordUsername,
+    discordAvatar: demoUser.discordAvatar,
+  },
+  loading: false,
+  signIn: () => {},
+  signOut: async () => {},
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    apiFetch<{ discordId: string; discordUsername?: string; discordAvatar?: string }>('/api/auth/me')
-      .then(data => {
-        setProfile({
-          discordId: data.discordId,
-          discordUsername: data.discordUsername,
-          discordAvatar: buildAvatarUrl(data.discordId, data.discordAvatar),
-        });
-      })
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const signIn = () => {
-    window.location.href = apiUrl('/api/auth/login');
-  };
-
-  const signOut = async () => {
-    await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-    setProfile(null);
-  };
-
   return (
-    <AuthContext.Provider value={{ profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={DEMO_CTX}>
       {children}
     </AuthContext.Provider>
   );

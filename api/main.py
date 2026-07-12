@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import characters, users, wishlist
+from api.routers import auth, characters, users, wishlist
 from api.settings import FRONTEND_ORIGIN
 from db.pool import close_pool, open_pool
 
@@ -30,6 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(characters.router)
 app.include_router(users.router)
 app.include_router(wishlist.router)

@@ -1,12 +1,20 @@
+from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from api import serializers
+from api.deps import require_user
 from api.services.images import get_character_images
 from db import repository as repo
 
 router = APIRouter(prefix="/api/characters", tags=["characters"])
+
+
+class OrderUpdate(BaseModel):
+    characterId: int
+    newOrder: int
 
 
 @router.get("")
@@ -29,6 +37,17 @@ async def list_characters(
         search=search,
     )
     return [serializers.character(r) for r in rows]
+
+
+@router.put("/order")
+async def update_order(
+    updates: list[OrderUpdate], discord_id: str = Depends(require_user)
+):
+    now = datetime.now(timezone.utc)
+    count = await repo.set_display_order(
+        discord_id, [(u.characterId, u.newOrder) for u in updates], now
+    )
+    return {"updated": count}
 
 
 @router.get("/{character_id}")

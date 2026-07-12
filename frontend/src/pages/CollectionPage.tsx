@@ -14,6 +14,29 @@ type Ownership = 'all' | 'owned' | 'available';
 
 const SIZE_ICONS: Record<CardSize, string> = { sm: 'S', md: 'M', lg: 'L' };
 
+function Segmented<T extends string>({ options, value, onChange, render }: {
+  options: readonly T[];
+  value: T | null;
+  onChange: (v: T) => void;
+  render?: (v: T) => React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-0.5 bg-panel rounded-lg p-0.5 border border-line">
+      {options.map(o => (
+        <button
+          key={o}
+          onClick={() => onChange(o)}
+          className={`px-3 py-1.5 rounded-md text-xs font-semibold capitalize transition-colors duration-150 ${
+            value === o ? 'bg-kakera text-night' : 'text-muted hover:text-ink'
+          }`}
+        >
+          {render ? render(o) : o}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function CollectionPage() {
   const { userId: routeUserId } = useParams<{ userId?: string }>();
   const { cardSize, setCardSize } = useStore();
@@ -108,18 +131,18 @@ export default function CollectionPage() {
     <div className="max-w-screen-2xl mx-auto px-4 py-6">
       {/* Profile header */}
       {profileUser && (
-        <div className="flex items-center gap-4 mb-6 p-4 bg-gray-800/50 rounded-2xl border border-gray-700/50">
+        <div className="flex items-center gap-4 mb-6 p-4 bg-panel rounded-xl border border-line animate-rise">
           {profileUser.discordAvatar
-            ? <img src={profileUser.discordAvatar} alt={profileUser.discordUsername} className="w-14 h-14 rounded-full ring-2 ring-blue-500/40" />
-            : <div className="w-14 h-14 rounded-full bg-blue-700 flex items-center justify-center text-white text-xl font-bold">{profileUser.discordUsername[0]}</div>
+            ? <img src={profileUser.discordAvatar} alt={profileUser.discordUsername} className="w-14 h-14 rounded-lg ring-1 ring-line" />
+            : <div className="w-14 h-14 rounded-lg bg-kakera-deep flex items-center justify-center text-white text-xl font-bold">{profileUser.discordUsername[0]}</div>
           }
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-white">{profileUser.discordUsername}</h1>
-            <p className="text-sm text-gray-400">{profileUser.characterCount} characters</p>
+            <h1 className="font-display font-bold text-xl text-ink">{profileUser.discordUsername}</h1>
+            <p className="text-sm text-muted">{profileUser.characterCount.toLocaleString()} characters</p>
           </div>
           <Link
             to={`/wishlist/${routeUserId}`}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700/60 hover:bg-pink-900/40 border border-gray-600 hover:border-pink-500/50 rounded-full text-sm text-gray-300 hover:text-pink-300 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-panel2 hover:bg-heart/15 border border-line hover:border-heart/50 rounded-lg text-sm font-semibold text-muted hover:text-heart transition-colors duration-200"
           >
             <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
@@ -130,11 +153,11 @@ export default function CollectionPage() {
       )}
 
       {/* Filters bar */}
-      <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-[#15162a]/95 backdrop-blur border-b border-white/5 mb-4">
+      <div className="sticky top-14 z-20 -mx-4 px-4 py-3 bg-night/90 backdrop-blur border-b border-line mb-5">
         <div className="flex flex-wrap gap-2 items-center">
           {/* Search */}
           <div className="relative flex-1 min-w-[180px] max-w-sm">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -142,79 +165,59 @@ export default function CollectionPage() {
               placeholder="Search name or series…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-full text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-8 py-2 bg-panel border border-line rounded-lg text-sm text-ink placeholder-muted focus:outline-none focus:border-kakera transition-colors"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">✕</button>
+              <button onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink">✕</button>
             )}
           </div>
 
           {/* Sort */}
-          <div className="flex gap-1 bg-gray-800 rounded-full p-1 border border-gray-700">
-            {(['kakera', 'recent', 'name', 'custom'] as Sort[]).map(s => (
-              <button
-                key={s}
-                onClick={() => cycleSort(s)}
-                className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
-                  sort === s ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {s}{sort === s ? (sortOrder === 'desc' ? ' ↓' : ' ↑') : ''}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            options={['kakera', 'recent', 'name', 'custom'] as const}
+            value={sort}
+            onChange={cycleSort}
+            render={s => <>{s}{sort === s ? (sortOrder === 'desc' ? ' ↓' : ' ↑') : ''}</>}
+          />
 
           {/* Ownership */}
           {!routeUserId && (
-            <div className="flex gap-1 bg-gray-800 rounded-full p-1 border border-gray-700">
-              {(['all', 'owned', 'available'] as Ownership[]).map(o => (
-                <button
-                  key={o}
-                  onClick={() => setOwnership(o)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
-                    ownership === o ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {o}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              options={['all', 'owned', 'available'] as const}
+              value={ownership}
+              onChange={setOwnership}
+            />
           )}
 
           {/* Card size */}
-          <div className="flex gap-1 bg-gray-800 rounded-full p-1 border border-gray-700 ml-auto">
-            {(['sm', 'md', 'lg'] as CardSize[]).map(s => (
-              <button
-                key={s}
-                onClick={() => setCardSize(s)}
-                className={`w-7 h-7 rounded-full text-xs font-bold transition-colors ${
-                  cardSize === s ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {SIZE_ICONS[s]}
-              </button>
-            ))}
+          <div className="ml-auto">
+            <Segmented
+              options={['sm', 'md', 'lg'] as const}
+              value={cardSize}
+              onChange={setCardSize}
+              render={s => SIZE_ICONS[s]}
+            />
           </div>
         </div>
 
-        {/* User filter pills */}
+        {/* Player filter pills */}
         {!routeUserId && users.length > 0 && (
-          <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-hide pb-1">
+          <div className="flex gap-2 mt-2.5 overflow-x-auto scrollbar-hide pb-1">
             {users.map(u => (
               <button
                 key={u.discordId}
                 onClick={() => toggleUser(u.discordId)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors border ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors duration-150 border ${
                   selectedUsers.includes(u.discordId)
-                    ? 'bg-blue-600 border-blue-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'
+                    ? 'bg-kakera/15 border-kakera/60 text-kakera'
+                    : 'bg-panel border-line text-muted hover:text-ink'
                 }`}
               >
                 {u.discordAvatar && (
-                  <img src={u.discordAvatar} alt={u.discordUsername} className="w-4 h-4 rounded-full" />
+                  <img src={u.discordAvatar} alt="" className="w-4 h-4 rounded" />
                 )}
                 {u.discordUsername}
-                <span className="opacity-60">{u.characterCount}</span>
+                <span className="font-mono opacity-60">{u.characterCount}</span>
               </button>
             ))}
           </div>
@@ -225,16 +228,20 @@ export default function CollectionPage() {
       {loading ? (
         <GridSkeleton count={PAGE} gridClass={SIZE_GRIDS[cardSize]} />
       ) : chars.length === 0 ? (
-        <div className="text-center py-24 text-gray-500">No characters found.</div>
+        <div className="text-center py-24 animate-rise">
+          <img src="/Kakera.webp" alt="" className="w-8 h-8 object-contain mx-auto mb-3 opacity-40" />
+          <p className="text-muted">No characters match. Clear the search or filters to see more.</p>
+        </div>
       ) : (
         <>
-          <div className={`grid ${SIZE_GRIDS[cardSize]} gap-2`}>
-            {chars.map(char => (
+          <div className={`grid ${SIZE_GRIDS[cardSize]} gap-2.5`}>
+            {chars.map((char, i) => (
               <CharacterCard
                 key={char.characterId}
                 character={char}
                 userMap={userMap}
                 wishers={wishersMap.get(char.characterId)}
+                index={i < PAGE ? i : undefined}
               />
             ))}
           </div>

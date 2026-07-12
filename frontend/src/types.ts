@@ -38,10 +38,11 @@ export function getRarity(kakeraValue: number | undefined): Rarity {
   return 'common';
 }
 
+// edge = card border accent, badge = kakera chip tier class (see index.css)
 export const RARITY = {
-  common:    { border: 'border-gray-700',    shadow: '',                          badge: 'bg-gray-700 text-gray-300',    label: 'Common' },
-  uncommon:  { border: 'border-emerald-500', shadow: 'shadow-emerald-500/40',     badge: 'bg-emerald-900 text-emerald-300', label: 'Uncommon' },
-  rare:      { border: 'border-blue-500',    shadow: 'shadow-blue-500/40',        badge: 'bg-blue-900 text-blue-300',    label: 'Rare' },
-  epic:      { border: 'border-purple-500',  shadow: 'shadow-purple-500/40',      badge: 'bg-purple-900 text-purple-300', label: 'Epic' },
-  legendary: { border: 'border-yellow-400',  shadow: 'shadow-yellow-400/50',      badge: 'bg-yellow-900 text-yellow-300', label: 'Legendary' },
-} satisfies Record<Rarity, { border: string; shadow: string; badge: string; label: string }>;
+  common:    { edge: 'edge-common',    badge: 'chip rarity-common',    label: 'Common' },
+  uncommon:  { edge: 'edge-uncommon',  badge: 'chip rarity-uncommon',  label: 'Uncommon' },
+  rare:      { edge: 'edge-rare',      badge: 'chip rarity-rare',      label: 'Rare' },
+  epic:      { edge: 'edge-epic',      badge: 'chip rarity-epic',      label: 'Epic' },
+  legendary: { edge: 'edge-legendary', badge: 'chip rarity-legendary', label: 'Legendary' },
+} satisfies Record<Rarity, { edge: string; badge: string; label: string }>;

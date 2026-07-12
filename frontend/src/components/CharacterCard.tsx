@@ -12,31 +12,33 @@ interface Props {
   dragging?: boolean;
   displayOrder?: number;
   hideWish?: boolean;
+  index?: number; // grid position, drives the staggered rise-in
 }
+
+const HEART_PATH = 'M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z';
 
 // Unified avatar — sm = card owner, md = tooltip wisher
 function UserAvatar({ user, variant = 'sm' }: { user?: AppUser; variant?: 'sm' | 'md' }) {
   const [err, setErr] = useState(false);
 
   if (variant === 'sm') {
-    // Small: card bottom-right owner
     return user?.discordAvatar && !err ? (
       <img
         src={user.discordAvatar}
         alt={user.discordUsername}
-        className="w-5 h-5 rounded-full object-cover ring-1 ring-black/40"
+        className="w-5 h-5 rounded-full object-cover ring-1 ring-line"
         onError={() => setErr(true)}
       />
     ) : (
-      <div className="w-5 h-5 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold" style={{ fontSize: 9 }}>
+      <div className="w-5 h-5 rounded-full bg-kakera-deep flex items-center justify-center text-white font-bold" style={{ fontSize: 9 }}>
         {(user?.discordUsername || '?')[0]?.toUpperCase()}
       </div>
     );
   }
 
-  // md: tooltip wisher with red aura
+  // md: tooltip wisher
   return (
-    <div className="w-7 h-7 rounded-full ring-2 ring-red-400/70 shadow-md shadow-red-500/40 shrink-0 overflow-hidden">
+    <div className="w-7 h-7 rounded-full ring-2 ring-heart/70 shrink-0 overflow-hidden">
       {user?.discordAvatar && !err ? (
         <img
           src={user.discordAvatar}
@@ -45,7 +47,7 @@ function UserAvatar({ user, variant = 'sm' }: { user?: AppUser; variant?: 'sm' |
           onError={() => setErr(true)}
         />
       ) : (
-        <div className="w-full h-full bg-red-900/60 flex items-center justify-center text-red-200 font-bold" style={{ fontSize: 10 }}>
+        <div className="w-full h-full bg-heart/20 flex items-center justify-center text-heart font-bold" style={{ fontSize: 10 }}>
           {(user?.discordUsername || '?')[0]?.toUpperCase()}
         </div>
       )}
@@ -53,22 +55,20 @@ function UserAvatar({ user, variant = 'sm' }: { user?: AppUser; variant?: 'sm' |
   );
 }
 
-// Compact avatar for the stacked preview row (no state needed — no error handling at this scale)
+// Compact avatar for the stacked preview row
 function PreviewAvatar({ user }: { user?: AppUser }) {
   return (
-    <div className="w-5 h-5 rounded-full ring-1 ring-red-400/60 shadow-sm shadow-red-500/30 shrink-0 overflow-hidden">
+    <div className="w-5 h-5 rounded-full ring-1 ring-heart/70 shrink-0 overflow-hidden">
       {user?.discordAvatar ? (
         <img src={user.discordAvatar} alt={user.discordUsername} className="w-full h-full object-cover" />
       ) : (
-        <div className="w-full h-full bg-red-900/70 flex items-center justify-center text-red-200 font-bold" style={{ fontSize: 8 }}>
+        <div className="w-full h-full bg-heart/25 flex items-center justify-center text-heart font-bold" style={{ fontSize: 8 }}>
           {(user?.discordUsername || '?')[0]?.toUpperCase()}
         </div>
       )}
     </div>
   );
 }
-
-const HEART_PATH = 'M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z';
 
 function WishersTooltip({ wisherIds, userMap }: { wisherIds: string[]; userMap?: Map<string, AppUser> }) {
   const [show, setShow] = useState(false);
@@ -86,22 +86,22 @@ function WishersTooltip({ wisherIds, userMap }: { wisherIds: string[]; userMap?:
           {preview.map(id => <PreviewAvatar key={id} user={userMap?.get(id)} />)}
         </div>
         {wisherIds.length > 3 && (
-          <span className="ml-1 text-[9px] text-red-300/80 font-bold">+{wisherIds.length - 3}</span>
+          <span className="ml-1 text-[9px] text-heart font-bold">+{wisherIds.length - 3}</span>
         )}
-        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center shadow">
-          <svg className="w-2 h-2 text-white" viewBox="0 0 20 20" fill="currentColor">
+        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-heart rounded-full flex items-center justify-center">
+          <svg className="w-2 h-2 text-night" viewBox="0 0 20 20" fill="currentColor">
             <path d={HEART_PATH} />
           </svg>
         </div>
       </div>
 
       {show && (
-        <div className="absolute top-full left-0 mt-1.5 bg-gray-900/95 border border-red-500/25 rounded-xl shadow-2xl shadow-red-500/10 p-2.5 z-50 pointer-events-none min-w-[120px]">
-          <p className="text-[9px] text-red-300/70 mb-2 font-semibold uppercase tracking-wider flex items-center gap-1">
+        <div className="absolute top-full left-0 mt-1.5 bg-panel border border-line rounded-lg shadow-xl shadow-black/40 p-2.5 z-50 pointer-events-none min-w-[120px] animate-fade-in">
+          <p className="text-[9px] text-heart mb-2 font-bold uppercase tracking-wider flex items-center gap-1">
             <svg className="w-2.5 h-2.5" viewBox="0 0 20 20" fill="currentColor">
               <path d={HEART_PATH} />
             </svg>
-            Wishlisted by
+            Wished by
           </p>
           <div className="flex flex-wrap gap-2">
             {wisherIds.map(id => {
@@ -109,7 +109,7 @@ function WishersTooltip({ wisherIds, userMap }: { wisherIds: string[]; userMap?:
               return (
                 <div key={id} className="flex flex-col items-center gap-0.5">
                   <UserAvatar user={u} variant="md" />
-                  <span className="text-[8px] text-gray-400 truncate max-w-[36px]">
+                  <span className="text-[8px] text-muted truncate max-w-[36px]">
                     {u?.discordUsername?.split('#')[0] || id.slice(0, 6)}
                   </span>
                 </div>
@@ -122,14 +122,15 @@ function WishersTooltip({ wisherIds, userMap }: { wisherIds: string[]; userMap?:
   );
 }
 
-export function CharacterCard({ character, userMap, wishers, compact, dragging, displayOrder, hideWish }: Props) {
+export function CharacterCard({ character, userMap, wishers, compact, dragging, displayOrder, hideWish, index }: Props) {
   const { isWished, toggleWish } = useStore();
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [wishing, setWishing] = useState(false);
+  const [popping, setPopping] = useState(false);
 
   const rarity = getRarity(character.kakeraValue);
-  const { border, shadow } = RARITY[rarity];
+  const { edge, badge } = RARITY[rarity];
   const wished = isWished(character.characterId);
   const owner = character.userId ? userMap?.get(character.userId) : undefined;
   const initials = character.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -139,91 +140,109 @@ export function CharacterCard({ character, userMap, wishers, compact, dragging, 
     e.stopPropagation();
     if (wishing) return;
     setWishing(true);
+    setPopping(true);
     await toggleWish(character.characterId);
     setWishing(false);
   };
 
+  const stagger = index !== undefined
+    ? { animationDelay: `${Math.min(index * 35, 500)}ms` }
+    : undefined;
+
+  const image = (
+    <div className="relative aspect-[2/3] overflow-hidden bg-panel2">
+      {character.imageUrl && !imgError ? (
+        <>
+          {!imgLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-muted/40 text-xl font-display font-bold">{initials}</span>
+            </div>
+          )}
+          <img
+            src={character.imageUrl}
+            alt={character.name}
+            className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.05] ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+          />
+        </>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
+          <span className="text-2xl font-display font-bold text-muted/50">{initials}</span>
+          <span className="text-[9px] text-muted/70 text-center leading-tight">{character.name}</span>
+        </div>
+      )}
+
+      {compact && (
+        <div className="absolute inset-x-0 bottom-0 bg-night/90 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <p className="text-ink text-[9px] font-semibold truncate">{character.name}</p>
+        </div>
+      )}
+
+      {displayOrder !== undefined && (
+        <div className="absolute top-1 left-1 bg-night/85 text-kakera font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+          {displayOrder + 1}
+        </div>
+      )}
+
+      {!hideWish && (
+        <button
+          onClick={handleWish}
+          aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
+          className={`
+            absolute bottom-1.5 right-1.5 pointer-events-auto
+            w-6 h-6 rounded-full flex items-center justify-center
+            transition-colors duration-200
+            ${wished ? 'bg-heart text-night opacity-100' : 'bg-night/70 text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-heart'}
+          `}
+        >
+          <svg
+            className={`w-3 h-3 ${popping ? 'animate-pop' : ''}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            onAnimationEnd={() => setPopping(false)}
+          >
+            <path d={HEART_PATH} />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+
   const cardContent = (
-    <div className={`
-      group relative overflow-visible rounded-xl border-2 aspect-[2/3]
-      bg-gray-900 transition-all duration-300
-      ${border}
-      ${shadow && !dragging ? `shadow-lg ${shadow}` : ''}
-      ${dragging ? 'opacity-50 scale-95' : 'hover:scale-[1.03] hover:shadow-xl'}
-    `}>
-      <div className="absolute inset-0 rounded-[10px] overflow-hidden">
-        {character.imageUrl && !imgError ? (
-          <>
-            {!imgLoaded && (
-              <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                <span className="text-gray-600 text-xl font-bold">{initials}</span>
-              </div>
-            )}
-            <img
-              src={character.imageUrl}
-              alt={character.name}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 gap-1 p-2">
-            <span className="text-2xl font-black text-gray-500">{initials}</span>
-            <span className="text-[9px] text-gray-600 text-center leading-tight">{character.name}</span>
-          </div>
-        )}
+    <div
+      style={stagger}
+      className={`
+        group relative rounded-xl border bg-panel overflow-visible
+        transition-all duration-200
+        ${edge}
+        ${index !== undefined ? 'animate-rise' : ''}
+        ${dragging
+          ? 'opacity-50 scale-95'
+          : 'hover:-translate-y-1 hover:border-kakera/60 hover:shadow-lg hover:shadow-black/50'}
+      `}
+    >
+      <div className="rounded-xl overflow-hidden">
+        {image}
 
-        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none" />
-
+        {/* Embed-style footer — solid, no scrim */}
         {!compact && (
-          <div className="absolute inset-x-0 bottom-0 p-2 pointer-events-none">
-            <p className="text-white font-semibold text-xs leading-tight truncate drop-shadow">{character.name}</p>
-            {character.series && (
-              <p className="text-gray-400 text-[10px] truncate mt-0.5">{character.series}</p>
-            )}
-            <div className="flex items-center justify-between mt-1">
+          <div className="px-2 py-1.5">
+            <p className="text-ink font-semibold text-xs leading-tight truncate">{character.name}</p>
+            <p className="text-muted text-[10px] truncate mt-0.5 min-h-[13px]">{character.series || ' '}</p>
+            <div className="flex items-center justify-between mt-1 min-h-[20px]">
               {character.kakeraValue ? (
-                <span className={`flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${RARITY[rarity].badge}`}>
+                <span className={badge}>
                   <img src="/Kakera.webp" alt="kakera" className="w-2.5 h-2.5 object-contain" />
                   {character.kakeraValue}
                 </span>
               ) : <span />}
-              {owner && <div className="pointer-events-auto"><UserAvatar user={owner} /></div>}
+              {owner && <UserAvatar user={owner} />}
             </div>
           </div>
-        )}
-
-        {compact && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <p className="text-white text-[9px] font-medium truncate">{character.name}</p>
-          </div>
-        )}
-
-        {displayOrder !== undefined && (
-          <div className="absolute top-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-            #{displayOrder + 1}
-          </div>
-        )}
-
-        {!hideWish && (
-          <button
-            onClick={handleWish}
-            className={`
-              absolute bottom-1 right-1 pointer-events-auto
-              w-6 h-6 rounded-full flex items-center justify-center
-              transition-all duration-200
-              ${wished ? 'bg-pink-600 text-white opacity-100' : 'bg-black/60 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-pink-400'}
-              ${wishing ? 'scale-90' : ''}
-            `}
-          >
-            <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-              <path d={HEART_PATH} />
-            </svg>
-          </button>
         )}
       </div>
 

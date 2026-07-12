@@ -17,32 +17,63 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const latest = recent[0];
+
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 py-12">
+    <div className="max-w-screen-2xl mx-auto px-4 py-10">
       {/* Hero */}
-      <div className="text-center mb-16">
-        <h1 className="text-4xl sm:text-6xl font-black mb-4 bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-          Mudae Web UI 
+      <div className="mb-12 max-w-3xl animate-rise">
+        <h1 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink mb-5">
+          Every claim on the server, in one place.
         </h1>
-        <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
-          Browse characters, manage your wishlist, and reorder your collection.
+        <p className="text-muted text-lg mb-7 max-w-xl">
+          Browse the full collection, keep a wishlist, and arrange your harem.
         </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/collection"
+            className="px-5 py-2.5 bg-kakera hover:bg-kakera-deep text-night hover:text-white rounded-lg text-sm font-bold transition-colors duration-200"
+          >
+            Browse collection
+          </Link>
+          <Link
+            to="/users"
+            className="px-5 py-2.5 bg-panel hover:bg-panel2 border border-line text-ink rounded-lg text-sm font-semibold transition-colors duration-200"
+          >
+            Players
+          </Link>
+        </div>
+        {latest && (
+          <p className="font-mono text-xs text-muted mt-7">
+            <span className="text-kakera font-bold">Latest claim</span>
+            {' · '}
+            <Link to={`/character/${latest.characterId}`} className="text-ink hover:text-kakera transition-colors">
+              {latest.name}
+            </Link>
+            {latest.series ? <span> — {latest.series}</span> : null}
+          </p>
+        )}
       </div>
 
-      {/* Recent */}
+      {/* Recent claims */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-300">Recently claimed</h2>
-          <Link to="/collection" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-display font-semibold text-lg text-ink">Recently claimed</h2>
+          <Link to="/collection" className="text-sm font-semibold text-kakera hover:text-ink transition-colors">
             View all →
           </Link>
         </div>
         {loading ? (
           <GridSkeleton count={18} gridClass={SIZE_GRIDS[cardSize]} />
+        ) : recent.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-line rounded-xl animate-rise">
+            <img src="/Kakera.webp" alt="" className="w-8 h-8 object-contain mx-auto mb-3 opacity-40" />
+            <p className="text-muted">No claims recorded yet. They appear here as the bot logs them.</p>
+          </div>
         ) : (
-          <div className={`grid ${SIZE_GRIDS[cardSize]} gap-2`}>
-            {recent.map(char => (
-              <CharacterCard key={char.characterId} character={char} />
+          <div className={`grid ${SIZE_GRIDS[cardSize]} gap-2.5`}>
+            {recent.map((char, i) => (
+              <CharacterCard key={char.characterId} character={char} index={i} />
             ))}
           </div>
         )}

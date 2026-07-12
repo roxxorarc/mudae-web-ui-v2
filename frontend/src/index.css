@@ -4,11 +4,41 @@
 
 @layer base {
   html { color-scheme: dark; }
-  body { @apply bg-[#15162a] text-white antialiased; }
+  body { @apply bg-night text-ink font-body antialiased; }
   * { @apply scroll-smooth; }
+  ::selection { @apply bg-kakera/40 text-white; }
+  :focus-visible { @apply outline-none ring-2 ring-kakera ring-offset-2 ring-offset-night; }
+}
+
+@layer components {
+  /* Kakera value chip — the rarity system. One chip, tier = color. */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none;
+  }
+  .rarity-common    { @apply border-line bg-panel2 text-muted; }
+  .rarity-uncommon  { @apply border-emerald-400/30 bg-emerald-400/10 text-emerald-300; }
+  .rarity-rare      { @apply border-kakera/40 bg-kakera/10 text-kakera; }
+  .rarity-epic      { @apply border-violet-400/40 bg-violet-400/10 text-violet-300; }
+  .rarity-legendary { @apply border-gold/50 bg-gold/10 text-gold; }
+
+  /* Card edge accents — only the top tiers announce themselves in a grid. */
+  .edge-common, .edge-uncommon, .edge-rare { @apply border-line; }
+  .edge-epic      { @apply border-violet-400/40; }
+  .edge-legendary { @apply border-gold/50; }
+
+  /* Mudae command literal — $sm, $changeimg, … */
+  .cmd { @apply font-mono text-[0.85em] text-kakera; }
 }
 
 @layer utilities {
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

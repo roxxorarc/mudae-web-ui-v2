@@ -12,12 +12,12 @@ function PersonPill({ p, href }: { p: PersonInfo; href: string }) {
   return (
     <Link
       to={href}
-      className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-800 hover:bg-blue-900/40 border border-gray-700 hover:border-blue-500/50 rounded-full text-xs text-gray-300 transition-colors"
+      className="flex items-center gap-1.5 px-2.5 py-1 bg-panel hover:bg-panel2 border border-line hover:border-kakera/60 rounded-lg text-xs font-semibold text-muted hover:text-ink transition-colors"
     >
       {p.avatar ? (
-        <img src={p.avatar} alt={p.username} className="w-4 h-4 rounded-full" />
+        <img src={p.avatar} alt="" className="w-4 h-4 rounded" />
       ) : (
-        <div className="w-4 h-4 rounded-full bg-blue-700 flex items-center justify-center text-white text-[8px] font-bold">
+        <div className="w-4 h-4 rounded bg-kakera-deep flex items-center justify-center text-white text-[8px] font-bold">
           {(p.username || '?')[0].toUpperCase()}
         </div>
       )}
@@ -99,11 +99,11 @@ export default function CharacterDetailPage() {
     return (
       <div className="max-w-screen-lg mx-auto px-4 py-12 animate-pulse">
         <div className="flex gap-8">
-          <div className="w-48 h-72 bg-gray-800 rounded-xl shrink-0" />
+          <div className="w-48 h-72 bg-panel border border-line rounded-xl shrink-0" />
           <div className="flex-1 space-y-4">
-            <div className="h-8 bg-gray-800 rounded w-1/2" />
-            <div className="h-4 bg-gray-800 rounded w-1/3" />
-            <div className="h-20 bg-gray-800 rounded" />
+            <div className="h-8 bg-panel rounded w-1/2" />
+            <div className="h-4 bg-panel rounded w-1/3" />
+            <div className="h-20 bg-panel rounded" />
           </div>
         </div>
       </div>
@@ -112,21 +112,22 @@ export default function CharacterDetailPage() {
 
   if (!char) {
     return (
-      <div className="max-w-screen-lg mx-auto px-4 py-24 text-center">
-        <p className="text-gray-400 mb-4">Character not found.</p>
-        <Link to="/collection" className="text-blue-400 hover:text-blue-300">← Collection</Link>
+      <div className="max-w-screen-lg mx-auto px-4 py-24 text-center animate-rise">
+        <img src="/Kakera.webp" alt="" className="w-8 h-8 object-contain mx-auto mb-3 opacity-40" />
+        <p className="text-muted mb-4">Character not found.</p>
+        <Link to="/collection" className="text-sm font-semibold text-kakera hover:text-ink transition-colors">← Collection</Link>
       </div>
     );
   }
 
   const rarity = getRarity(char.kakeraValue);
-  const { border, shadow, badge } = RARITY[rarity];
+  const { edge, badge, label } = RARITY[rarity];
   const wished = isWished(char.characterId);
   const initials = char.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
   return (
     <div className="max-w-screen-lg mx-auto px-4 py-8">
-      <Link to={-1 as unknown as string} className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-6 transition-colors">
+      <Link to={-1 as unknown as string} className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink mb-6 transition-colors">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
@@ -134,17 +135,17 @@ export default function CharacterDetailPage() {
       </Link>
 
       {/* Main info */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-10">
+      <div className="flex flex-col sm:flex-row gap-6 mb-10 animate-rise">
         {/* Card */}
-        <div className={`relative w-40 sm:w-48 shrink-0 rounded-xl overflow-hidden border-2 ${border} ${shadow ? `shadow-xl ${shadow}` : ''}`}>
+        <div className={`relative w-40 sm:w-48 shrink-0 rounded-xl overflow-hidden border bg-panel ${edge}`}>
           {char.imageUrl ? (
             <img src={char.imageUrl} alt={char.name} className="w-full aspect-[2/3] object-cover"
               referrerPolicy="no-referrer"
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : (
-            <div className="w-full aspect-[2/3] bg-gray-800 flex flex-col items-center justify-center gap-1 p-3">
-              <span className="text-3xl font-black text-gray-500">{initials}</span>
-              <span className="text-[10px] text-gray-600 text-center">{char.name}</span>
+            <div className="w-full aspect-[2/3] flex flex-col items-center justify-center gap-1 p-3">
+              <span className="text-3xl font-display font-bold text-muted/50">{initials}</span>
+              <span className="text-[10px] text-muted/70 text-center">{char.name}</span>
             </div>
           )}
         </div>
@@ -152,47 +153,47 @@ export default function CharacterDetailPage() {
         {/* Info */}
         <div className="flex-1">
           <div className="flex items-start gap-3 flex-wrap">
-            <h1 className="text-3xl font-black text-white">{char.name}</h1>
+            <h1 className="font-display font-bold text-3xl sm:text-4xl text-ink">{char.name}</h1>
             {char.kakeraValue && (
-              <span className={`mt-1.5 flex items-center gap-1 text-sm font-bold px-2.5 py-1 rounded-full ${badge}`}>
+              <span className={`${badge} mt-2 !text-sm !px-2.5 !py-1`} title={label}>
                 <img src="/Kakera.webp" alt="kakera" className="w-4 h-4 object-contain" />
                 {char.kakeraValue}
               </span>
             )}
           </div>
 
-          {char.series && <p className="text-gray-400 text-lg mt-1">{char.series}</p>}
+          {char.series && <p className="text-muted text-lg mt-1">{char.series}</p>}
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
             <button
               onClick={handleWish}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 ${
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm transition-colors duration-200 ${
                 wished
-                  ? 'bg-pink-600 text-white shadow-lg shadow-pink-500/30 hover:bg-pink-700'
-                  : 'bg-gray-800 border border-gray-700 text-gray-300 hover:border-pink-500 hover:text-pink-400'
+                  ? 'bg-heart text-night hover:bg-heart/85'
+                  : 'bg-panel border border-line text-muted hover:border-heart/60 hover:text-heart'
               } ${wishing ? 'opacity-60' : ''}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill={wished ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={wished ? 0 : 1.5}>
                 <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
               </svg>
-              {wished ? 'In Wishlist' : 'Add to Wishlist'}
+              {wished ? 'In wishlist' : 'Add to wishlist'}
             </button>
 
             {owner && (
-              <div className="flex items-center gap-1.5 text-m text-gray-400">
-                <span className="text-gray-600">owned by</span>
+              <div className="flex items-center gap-1.5 text-sm text-muted">
+                <span className="text-muted/60">claimed by</span>
                 <PersonPill p={owner} href={`/user/${owner.id}`} />
               </div>
             )}
             {!owner && char.userId && (
-              <span className="text-xs text-gray-600">Loading owner…</span>
+              <span className="text-xs text-muted/60">Loading owner…</span>
             )}
           </div>
 
           {/* Wishers */}
           {wishers.length > 0 && (
             <div className="mt-5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Wishlisted by</p>
+              <p className="text-xs font-bold text-heart uppercase tracking-wider mb-2">Wished by</p>
               <div className="flex flex-wrap gap-2">
                 {wishers.map(w => (
                   <PersonPill key={w.id} p={w} href={`/wishlist/${w.id}`} />
@@ -202,17 +203,17 @@ export default function CharacterDetailPage() {
           )}
 
           {/* Meta */}
-          <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-gray-500">
+          <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-muted">
             {char.claimedAt && (
               <div>
-                <span className="uppercase tracking-wider block mb-0.5">Claimed</span>
-                <span className="text-gray-300">{new Date(char.claimedAt).toLocaleDateString()}</span>
+                <span className="uppercase tracking-wider block mb-0.5 text-muted/60">Claimed</span>
+                <span className="text-ink font-mono">{new Date(char.claimedAt).toLocaleDateString()}</span>
               </div>
             )}
             {char.addedAt && (
               <div>
-                <span className="uppercase tracking-wider block mb-0.5">Added</span>
-                <span className="text-gray-300">{new Date(char.addedAt).toLocaleDateString()}</span>
+                <span className="uppercase tracking-wider block mb-0.5 text-muted/60">Added</span>
+                <span className="text-ink font-mono">{new Date(char.addedAt).toLocaleDateString()}</span>
               </div>
             )}
           </div>
@@ -222,14 +223,14 @@ export default function CharacterDetailPage() {
       {/* Image gallery */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="font-display font-semibold text-lg text-ink">
             Images{' '}
             {!imagesLoading && images.length > 0 && (
-              <span className="text-gray-500 text-sm font-normal">({images.length})</span>
+              <span className="text-muted text-sm font-body font-normal">({images.length})</span>
             )}
           </h2>
           {images.length > 0 && (
-            <p className="text-xs text-gray-500">Click to expand · hover for <code className="bg-gray-800 px-1 py-0.5 rounded">$changeimg</code></p>
+            <p className="text-xs text-muted">Click to expand · hover to copy <span className="cmd">$changeimg</span></p>
           )}
         </div>
 
@@ -237,7 +238,7 @@ export default function CharacterDetailPage() {
         {imagesLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-[2/3] rounded-xl bg-gray-800 animate-pulse" />
+              <div key={i} className="aspect-[2/3] rounded-xl bg-panel border border-line animate-pulse" />
             ))}
           </div>
         )}
@@ -248,12 +249,12 @@ export default function CharacterDetailPage() {
             {images.map((url, i) => (
               <div
                 key={i}
-                className="relative group animate-fade-in"
-                style={{ animationDelay: `${Math.min(i * 30, 300)}ms`, animationFillMode: 'both' }}
+                className="relative group animate-rise"
+                style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
               >
                 <button
                   onClick={() => setModalIdx(i)}
-                  className="w-full rounded-xl overflow-hidden border-2 border-gray-700 hover:border-blue-500 aspect-[2/3] transition-all duration-200 hover:scale-[1.03] hover:shadow-xl hover:shadow-blue-500/20 block"
+                  className="w-full rounded-xl overflow-hidden border border-line hover:border-kakera aspect-[2/3] transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/50 block bg-panel"
                 >
                   {!imgLoadErrors.has(i) ? (
                     <img
@@ -265,25 +266,25 @@ export default function CharacterDetailPage() {
                       onError={() => setImgLoadErrors(prev => new Set([...prev, i]))}
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-600 text-xs">
+                    <div className="w-full h-full flex items-center justify-center text-muted/60 font-mono text-xs">
                       #{i + 1}
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="absolute inset-0 bg-night/0 group-hover:bg-night/40 transition-colors duration-200 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-ink opacity-0 group-hover:opacity-90 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
                     </svg>
                   </div>
                 </button>
                 <button
                   onClick={() => copyImage(i)}
-                  className={`absolute bottom-1.5 right-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full transition-all duration-150 ${
+                  className={`absolute bottom-1.5 right-1.5 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md transition-all duration-150 ${
                     copiedIdx === i
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-black/70 text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-blue-600 hover:text-white'
+                      ? 'bg-emerald-400 text-night'
+                      : 'bg-night/80 text-muted opacity-0 group-hover:opacity-100 hover:bg-kakera hover:text-night'
                   }`}
                 >
-                  {copiedIdx === i ? 'Copied!' : `#${i + 1}`}
+                  {copiedIdx === i ? 'Copied' : `#${i + 1}`}
                 </button>
               </div>
             ))}
@@ -291,14 +292,14 @@ export default function CharacterDetailPage() {
         )}
 
         {!imagesLoading && images.length === 0 && (
-          <p className="text-gray-600 text-sm">No images found.</p>
+          <p className="text-muted/70 text-sm">No images found for this character.</p>
         )}
       </div>
 
       {/* Lightbox modal */}
       {modalIdx !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night/95 backdrop-blur-sm animate-fade-in"
           onClick={() => setModalIdx(null)}
           onKeyDown={e => {
             if (e.key === 'Escape') setModalIdx(null);
@@ -311,7 +312,8 @@ export default function CharacterDetailPage() {
           {modalIdx > 0 && (
             <button
               onClick={e => { e.stopPropagation(); setModalIdx(modalIdx - 1); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 flex items-center justify-center text-white transition-colors z-10"
+              aria-label="Previous image"
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-panel hover:bg-panel2 border border-line flex items-center justify-center text-ink transition-colors z-10"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
@@ -319,7 +321,8 @@ export default function CharacterDetailPage() {
           {modalIdx < images.length - 1 && (
             <button
               onClick={e => { e.stopPropagation(); setModalIdx(modalIdx + 1); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 flex items-center justify-center text-white transition-colors z-10"
+              aria-label="Next image"
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-panel hover:bg-panel2 border border-line flex items-center justify-center text-ink transition-colors z-10"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </button>
@@ -327,15 +330,16 @@ export default function CharacterDetailPage() {
           <img
             src={images[modalIdx]}
             alt={`${char.name} #${modalIdx + 1}`}
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl shadow-black/60"
             referrerPolicy="no-referrer"
             onClick={e => e.stopPropagation()}
           />
           <div className="absolute top-4 right-4 flex items-center gap-2">
-            <span className="text-sm text-gray-400">{modalIdx + 1} / {images.length}</span>
+            <span className="font-mono text-sm text-muted">{modalIdx + 1} / {images.length}</span>
             <button
               onClick={() => setModalIdx(null)}
-              className="w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 flex items-center justify-center text-white transition-colors"
+              aria-label="Close"
+              className="w-8 h-8 rounded-lg bg-panel hover:bg-panel2 border border-line flex items-center justify-center text-ink transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -343,11 +347,11 @@ export default function CharacterDetailPage() {
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             <button
               onClick={e => { e.stopPropagation(); copyImage(modalIdx); }}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                copiedIdx === modalIdx ? 'bg-emerald-500 text-white' : 'bg-gray-900/80 text-gray-300 hover:bg-blue-600 hover:text-white'
+              className={`px-4 py-2 rounded-lg font-mono text-sm font-bold transition-colors ${
+                copiedIdx === modalIdx ? 'bg-emerald-400 text-night' : 'bg-panel border border-line text-muted hover:bg-kakera hover:text-night hover:border-kakera'
               }`}
             >
-              {copiedIdx === modalIdx ? 'Copied!' : `Copy $changeimg ${char.name}$${modalIdx + 1}`}
+              {copiedIdx === modalIdx ? 'Copied' : `Copy $changeimg ${char.name}$${modalIdx + 1}`}
             </button>
           </div>
         </div>

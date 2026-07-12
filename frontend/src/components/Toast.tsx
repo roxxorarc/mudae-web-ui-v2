@@ -2,9 +2,9 @@ import type { Toast } from '../hooks/useToast';
 
 const ICONS = { success: '✓', error: '✕', info: 'ℹ' };
 const COLORS = {
-  success: 'border-emerald-500 bg-emerald-950/90 text-emerald-200',
-  error:   'border-red-500 bg-red-950/90 text-red-200',
-  info:    'border-blue-500 bg-blue-950/90 text-blue-200',
+  success: 'border-l-emerald-400 text-emerald-300',
+  error:   'border-l-red-400 text-red-300',
+  info:    'border-l-kakera text-kakera',
 };
 
 export function ToastList({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
@@ -14,10 +14,10 @@ export function ToastList({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id
         <div
           key={t.id}
           onClick={() => onRemove(t.id)}
-          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm shadow-2xl cursor-pointer animate-fade-in max-w-sm ${COLORS[t.type]}`}
+          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg bg-panel border border-line border-l-2 shadow-2xl shadow-black/50 cursor-pointer animate-rise max-w-sm ${COLORS[t.type]}`}
         >
           <span className="font-bold text-lg leading-none">{ICONS[t.type]}</span>
-          <span className="text-sm font-medium">{t.message}</span>
+          <span className="text-sm font-semibold text-ink">{t.message}</span>
         </div>
       ))}
     </div>

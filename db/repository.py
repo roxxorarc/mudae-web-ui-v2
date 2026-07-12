@@ -30,7 +30,7 @@ _SORT_SQL = {
     "name": 'name {dir}',
     "kakera": '"kakeraValue" {dir} NULLS LAST, name ASC',
     "custom": '"displayOrder" {dir} NULLS LAST, "addedAt" ASC',
-    "recent": '"claimedAt" {dir}, "addedAt" {dir}',
+    "recent": '"claimedAt" {dir} NULLS LAST, "addedAt" {dir}',
 }
 
 

@@ -5,6 +5,9 @@ This is a complete rewrite of a previous version I made last year completely in 
 The stack is fully self-hosted: a Postgres database, a FastAPI backend (REST API + Discord OAuth login + image scraping), a React frontend, and a Discord bot that automatically synchronizes Mudae activities into the database. No third-party backend service is required.
 
 ---
+## Demo
+A live demo is available at https://demo-mudae.roxx.dev/
+
 
 ## 📋 Prerequisites
 

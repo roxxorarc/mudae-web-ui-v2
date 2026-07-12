@@ -103,6 +103,21 @@ python -m pytest bot/tests/ -c bot/pytest.ini
 
 ---
 
+## 📦 Migrating data from Supabase
+
+If you come from the previous Supabase-based version, `db/scripts/migrate_from_supabase.py` copies all data (users, characters, wishlists, image cache) into the self-hosted Postgres. It is idempotent (safe to re-run) and preserves original ids.
+
+The easiest way is to run it inside the API container, which already has the dependencies and the target `DATABASE_URL`:
+
+```bash
+docker exec -e SUPABASE_DB_URL="postgresql://postgres.[REF]:[PASSWORD]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres" \
+  <backend-api-container> python -m db.scripts.migrate_from_supabase
+```
+
+The source URI is in the Supabase dashboard under Settings → Database (use the session pooler, port 5432).
+
+---
+
 ## 📜 Architecture & Automation Notes
 
 - **Users:** When a user interacts with the Mudae bot (marries/claims), the bot pre-ensures profile existence (`ensure_user_profile`) before writing ownership to `Characters.userId`. When a user logs into the web UI via Discord OAuth, their profile is upserted by the API at the OAuth callback. No manual sign-up is required.

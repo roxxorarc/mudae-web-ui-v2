@@ -22,7 +22,7 @@ const SortableCard = memo(function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative ${selected ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-[#15162a] rounded-xl' : ''}`}
+      className={`relative ${selected ? 'ring-2 ring-kakera ring-offset-2 ring-offset-night rounded-xl' : ''}`}
       {...attributes}
       {...listeners}
       onClick={e => { e.stopPropagation(); onSelect(character.characterId, e); }}
@@ -128,9 +128,9 @@ export default function CharacterOrderPage() {
       await updateCharacterOrder(changed.map((c) => ({ characterId: c.characterId, newOrder: chars.indexOf(c) })));
       setInitialOrder(new Map(chars.map((c, i) => [c.characterId, i])));
       setHasChanges(false);
-      toast(`Saved! (${changed.length} characters updated)`, 'success');
+      toast(`Order saved — ${changed.length} characters updated`, 'success');
     } catch {
-      toast('Failed to save order', 'error');
+      toast('Could not save the order. Try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -139,7 +139,7 @@ export default function CharacterOrderPage() {
   const copySmCmd = async () => {
     if (!chars.length) return;
     await navigator.clipboard.writeText('$sm ' + chars.map(c => c.name).join('$'));
-    toast(`$sm copied for ${chars.length} characters!`, 'success');
+    toast(`$sm copied for ${chars.length} characters`, 'success');
   };
 
   const activeChar = activeDragId ? chars.find(c => c.characterId === activeDragId) : null;
@@ -154,15 +154,17 @@ export default function CharacterOrderPage() {
   );
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 py-6 pb-24">
+    <div className="max-w-screen-2xl mx-auto px-4 py-6 pb-28">
       {/* Header */}
-      <div className="flex flex-col gap-3 mb-6">
+      <div className="flex flex-col gap-3 mb-6 animate-rise">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">Reorder My Characters</h1>
-            <p className="text-sm text-gray-400 mt-1">{chars.length} characters · Drag to reorder · Ctrl+click multi-select</p>
+            <h1 className="font-display font-bold text-2xl text-ink">Reorder characters</h1>
+            <p className="text-sm text-muted mt-1">
+              {chars.length} characters · Drag to reorder · Ctrl+click to multi-select
+            </p>
           </div>
-          <button onClick={() => navigate('/collection')} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full text-sm text-gray-300 transition-colors border border-gray-700 shrink-0">
+          <button onClick={() => navigate('/collection')} className="px-4 py-2 bg-panel hover:bg-panel2 rounded-lg text-sm font-semibold text-muted hover:text-ink transition-colors border border-line shrink-0">
             ← Back
           </button>
         </div>
@@ -171,24 +173,11 @@ export default function CharacterOrderPage() {
           <button
             onClick={copySmCmd}
             disabled={!chars.length}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-40 rounded-full text-sm text-gray-300 transition-colors border border-gray-700 font-mono"
+            className="px-4 py-2 bg-panel hover:bg-panel2 disabled:opacity-40 rounded-lg text-sm text-muted hover:text-kakera transition-colors border border-line font-mono font-bold"
           >
             Copy $sm
           </button>
-          <button
-            onClick={saveOrder}
-            disabled={!hasChanges || saving}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:bg-gray-700 rounded-full text-sm text-white font-semibold transition-colors"
-          >
-            {saving ? 'Saving…' : 'Save Order'}
-          </button>
         </div>
-
-        {hasChanges && (
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-yellow-950/50 border border-yellow-700/50 rounded-xl text-yellow-300 text-sm">
-            <span>⚠</span> Unsaved changes
-          </div>
-        )}
       </div>
 
       {/* Grid */}
@@ -218,7 +207,7 @@ export default function CharacterOrderPage() {
                   <CharacterCard character={c} compact hideWish dragging />
                 </div>
               ))}
-              <div className="absolute -bottom-1 -right-1 bg-violet-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full z-10">
+              <div className="absolute -bottom-1 -right-1 bg-kakera text-night text-xs font-bold px-1.5 py-0.5 rounded-md z-10">
                 {draggedChars.length}
               </div>
             </div>
@@ -227,7 +216,27 @@ export default function CharacterOrderPage() {
       </DndContext>
 
       {chars.length === 0 && (
-        <div className="text-center py-24 text-gray-500">No characters in your collection yet.</div>
+        <div className="text-center py-24 animate-rise">
+          <img src="/Kakera.webp" alt="" className="w-8 h-8 object-contain mx-auto mb-3 opacity-40" />
+          <p className="text-muted">No characters in your collection yet.</p>
+        </div>
+      )}
+
+      {/* Floating save bar — appears only when the order changed */}
+      {hasChanges && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 pl-4 pr-2 py-2 bg-panel border border-line rounded-xl shadow-2xl shadow-black/60 animate-rise">
+          <span className="flex items-center gap-2 text-sm text-ink font-semibold">
+            <span className="w-2 h-2 rounded-full bg-gold shrink-0" />
+            Unsaved order
+          </span>
+          <button
+            onClick={saveOrder}
+            disabled={saving}
+            className="px-4 py-1.5 bg-kakera hover:bg-kakera-deep disabled:opacity-50 rounded-lg text-sm text-night hover:text-white font-bold transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save order'}
+          </button>
+        </div>
       )}
 
       <ToastList toasts={toasts} onRemove={remove} />

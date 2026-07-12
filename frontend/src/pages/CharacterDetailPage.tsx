@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchCharacterById, fetchWishers, fetchUserProfile, supabase } from '../db';
+import { fetchCharacterById, fetchWishers, fetchUserProfile } from '../db';
+import { apiFetch } from '../api';
 import { useStore } from '../store';
 import type { Character } from '../types';
 import { getRarity, RARITY } from '../types';
@@ -72,8 +73,8 @@ export default function CharacterDetailPage() {
       // Load gallery images
       if (c?.characterId) {
         setImagesLoading(true);
-        supabase.functions.invoke('get-character-images', { body: { characterId: c.characterId } })
-          .then(({ data }) => { if (data?.images) setImages(data.images); })
+        apiFetch<{ images?: string[] }>(`/api/characters/${c.characterId}/images`)
+          .then(data => { if (data?.images) setImages(data.images); })
           .catch(() => {})
           .finally(() => setImagesLoading(false));
       }

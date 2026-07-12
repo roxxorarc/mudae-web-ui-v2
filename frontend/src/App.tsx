@@ -19,8 +19,9 @@ const Loader = () => (
 );
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  return user ? <>{children}</> : <Navigate to="/" replace />;
+  const { profile, loading } = useAuth();
+  if (loading) return <Loader />;
+  return profile ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function AppRoutes() {

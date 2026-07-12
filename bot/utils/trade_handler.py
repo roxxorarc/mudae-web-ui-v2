@@ -7,6 +7,7 @@ import discord
 from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
 from bot.utils.patterns import TRADE_PATTERN
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
+from db import repository
 
 logger = logging.getLogger("MudaeBot")
 
@@ -50,11 +51,8 @@ class TradeHandler(MudaeEventHandler):
         right_chars: list[str],
         message: discord.Message,
     ) -> bool:
-        left_result = self.db.table("Characters").select("name, userId").in_("name", left_chars).execute()
-        right_result = self.db.table("Characters").select("name, userId").in_("name", right_chars).execute()
-
-        left_db_chars = left_result.data or []
-        right_db_chars = right_result.data or []
+        left_db_chars = await repository.get_characters_by_names(left_chars)
+        right_db_chars = await repository.get_characters_by_names(right_chars)
 
         if not left_db_chars or not right_db_chars:
             return False
@@ -85,28 +83,24 @@ class TradeHandler(MudaeEventHandler):
 
         now = datetime.now(timezone.utc).isoformat()
 
-        if not ensure_user_profile(left_owner_id, str(left_user)):
+        if not await ensure_user_profile(left_owner_id, str(left_user)):
             logger.warning(
                 f"{LOG_EMOJIS['warning']} Could not upsert user_profile for trade owner {left_user} ({left_owner_id}), skipping trade"
             )
             return False
 
-        if not ensure_user_profile(right_owner_id, str(right_user)):
+        if not await ensure_user_profile(right_owner_id, str(right_user)):
             logger.warning(
                 f"{LOG_EMOJIS['warning']} Could not upsert user_profile for trade owner {right_user} ({right_owner_id}), skipping trade"
             )
             return False
 
-        # Swap owners (sequential - supabase doesn't support transactions via client)
-        self.db.table("Characters").update({
-            "userId": right_owner_id,
-            "claimedAt": now,
-        }).in_("name", left_char_names).execute()
-
-        self.db.table("Characters").update({
-            "userId": left_owner_id,
-            "claimedAt": now,
-        }).in_("name", right_char_names).execute()
+        # Swap owners atomically
+        await repository.swap_owners(
+            left_char_names, right_owner_id,
+            right_char_names, left_owner_id,
+            now,
+        )
 
         logger.info(f"{LOG_EMOJIS['success']} {LOG_MESSAGES.trade.completed(left_char_names, right_char_names)}")
         return True

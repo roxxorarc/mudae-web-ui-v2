@@ -22,11 +22,11 @@ function NavItem({ to, label, end }: { to: string; label: string; end?: boolean 
 }
 
 function UserMenu() {
-  const { user, profile, signIn, signOut } = useAuth();
+  const { profile, signIn, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  if (!user) {
+  if (!profile) {
     return (
     <button
       onClick={signIn}
@@ -40,8 +40,8 @@ function UserMenu() {
     );
   }
 
-  const avatar = user.user_metadata?.avatar_url as string | undefined;
-  const name = profile?.discordUsername || user.user_metadata?.full_name || 'User';
+  const avatar = profile.discordAvatar;
+  const name = profile.discordUsername || 'User';
 
   return (
     <div className="relative">
@@ -68,7 +68,7 @@ function UserMenu() {
           <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50">
             <div className="px-4 py-3 border-b border-gray-800">
               <p className="text-sm font-semibold text-white truncate">{name}</p>
-              <p className="text-xs text-gray-500 truncate">{user.email || 'Discord'}</p>
+              <p className="text-xs text-gray-500 truncate">Discord</p>
             </div>
             <div className="py-1">
               <MenuBtn icon="♥" label="My Wishlist" onClick={() => { navigate('/wishlist'); setOpen(false); }} />

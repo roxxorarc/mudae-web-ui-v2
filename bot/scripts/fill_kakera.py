@@ -25,7 +25,8 @@ import discord
 from dotenv import load_dotenv
 
 from bot.utils.patterns import MUDAE_BOT_ID, CHARACTER_PATTERNS
-from db.database import supabase
+from db import repository
+from db.pool import open_pool, close_pool
 
 load_dotenv()
 logger = logging.getLogger("MudaeBot")
@@ -80,14 +81,15 @@ async def main():
     client = discord.Client(intents=intents)
 
     await client.login(discord_token)
+    await open_pool()
 
     # Fetch characters with kakera = 0
-    result = supabase.table("Characters").select("characterId, name").eq("kakeraValue", 0).execute()
-    zero_kakera = result.data or []
+    zero_kakera = await repository.list_zero_kakera_characters()
 
     if not zero_kakera:
         print("No characters with kakera = 0 found.")
         await client.close()
+        await close_pool()
         sys.exit(0)
 
     # Build lookup maps
@@ -183,7 +185,7 @@ async def main():
                                 if dry_run:
                                     logger.info(f"\U0001f501 [DRY] Would update {info['name']} ({info['id']}) -> {parsed}")
                                 else:
-                                    supabase.table("Characters").update({"kakeraValue": parsed}).eq("characterId", int(info["id"])).execute()
+                                    await repository.update_character(int(info["id"]), kakeraValue=parsed)
                                     logger.info(f"\u2705 Updated {info['name']} ({info['id']}) -> {parsed}")
                                 updated_count += 1
                                 del lookup_by_name[n]
@@ -210,7 +212,7 @@ async def main():
                                     if dry_run:
                                         logger.info(f"\U0001f501 [DRY] Would update {info['name']} ({info['id']}) -> {kakera}")
                                     else:
-                                        supabase.table("Characters").update({"kakeraValue": kakera}).eq("characterId", int(info["id"])).execute()
+                                        await repository.update_character(int(info["id"]), kakeraValue=kakera)
                                         logger.info(f"\u2705 Updated {info['name']} ({info['id']}) -> {kakera}")
                                     updated_count += 1
                                     lookup_by_name.pop(normalize(info["name"]), None)
@@ -264,7 +266,7 @@ async def main():
                         if dry_run:
                             logger.info(f"\U0001f501 [DRY] Would update {matched['name']} ({matched['id']}) -> {kakera}")
                         else:
-                            supabase.table("Characters").update({"kakeraValue": kakera}).eq("characterId", int(matched["id"])).execute()
+                            await repository.update_character(int(matched["id"]), kakeraValue=kakera)
                             logger.info(f"\u2705 Updated {matched['name']} ({matched['id']}) -> {kakera}")
                         updated_count += 1
                         lookup_by_name.pop(matched_name, None)
@@ -288,6 +290,7 @@ async def main():
 
     print(f"Done. Updated {updated_count} characters.")
     await client.close()
+    await close_pool()
 
 
 if __name__ == "__main__":

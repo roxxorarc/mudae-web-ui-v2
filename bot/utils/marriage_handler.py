@@ -6,6 +6,7 @@ import discord
 from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
 from bot.utils.patterns import MARRIAGE_PATTERNS
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
+from db import repository
 
 logger = logging.getLogger("MudaeBot")
 
@@ -51,7 +52,7 @@ class MarriageHandler(MudaeEventHandler):
         if not user_id:
             return
 
-        if not ensure_user_profile(user_id, username):
+        if not await ensure_user_profile(user_id, username):
             logger.warning(
                 f"{LOG_EMOJIS['warning']} Could not upsert user_profile for {username} ({user_id}), skipping marriage update"
             )
@@ -61,12 +62,8 @@ class MarriageHandler(MudaeEventHandler):
             logger.info(f"{LOG_EMOJIS['marriage']} {LOG_MESSAGES.marriage.detected(username, character_name)}")
 
             now = datetime.now(timezone.utc).isoformat()
-            result = self.db.table("Characters").update({
-                "userId": user_id,
-                "claimedAt": now,
-            }).eq("name", character_name).execute()
+            count = await repository.set_owner_by_names([character_name], user_id, now)
 
-            count = len(result.data) if result.data else 0
             if count > 0:
                 logger.info(f"{LOG_EMOJIS['success']} {LOG_MESSAGES.marriage.updated(character_name, username, count)}")
             else:

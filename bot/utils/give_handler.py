@@ -6,6 +6,7 @@ import discord
 from bot.utils.mudae_event_handler import MudaeEventHandler, EventConfig, ensure_user_profile
 from bot.utils.patterns import GIVE_PATTERN
 from bot.config.constants import LOG_EMOJIS, LOG_MESSAGES
+from db import repository
 
 logger = logging.getLogger("MudaeBot")
 
@@ -37,19 +38,14 @@ class GiveHandler(MudaeEventHandler):
             logger.info(f"{LOG_EMOJIS['give']} {LOG_MESSAGES.give.detected(character_name, to_username)}")
 
             try:
-                if not ensure_user_profile(to_user_id, to_username):
+                if not await ensure_user_profile(to_user_id, to_username):
                     logger.warning(
                         f"{LOG_EMOJIS['warning']} Could not upsert user_profile for {to_username} ({to_user_id}), skipping give update"
                     )
                     return
 
                 now = datetime.now(timezone.utc).isoformat()
-                result = self.db.table("Characters").update({
-                    "userId": to_user_id,
-                    "claimedAt": now,
-                }).eq("name", character_name).execute()
-
-                count = len(result.data) if result.data else 0
+                count = await repository.set_owner_by_names([character_name], to_user_id, now)
                 if count > 0:
                     logger.info(f"{LOG_EMOJIS['success']} {LOG_MESSAGES.give.completed(character_name, to_username)}")
                 else:

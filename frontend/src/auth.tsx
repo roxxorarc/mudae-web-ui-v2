@@ -1,79 +1,50 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { User, Session } from '@supabase/supabase-js';
-import { supabase, fetchUserProfile } from './db';
+import { apiFetch, apiUrl } from './api';
+import { buildAvatarUrl } from './db';
 
 interface UserProfile {
-  id: string;         // Supabase auth UUID
   discordId: string;  // Discord snowflake ID
   discordUsername?: string;
   discordAvatar?: string;
 }
 
 interface AuthCtx {
-  user: User | null;
-  session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
-  signIn: () => Promise<void>;
+  signIn: () => void;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function loadProfile(u: User) {
-    // Discord OAuth stores the Discord user ID in provider_id
-    const discordId = u.user_metadata?.provider_id as string | undefined;
-    if (!discordId) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const data = await fetchUserProfile(discordId);
-      setProfile(data ? { id: u.id, ...data } : { id: u.id, discordId });
-    } catch {
-      setProfile({ id: u.id, discordId });
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user);
-      else setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user);
-      else { setProfile(null); setLoading(false); }
-    });
-
-    return () => subscription.unsubscribe();
+    apiFetch<{ discordId: string; discordUsername?: string; discordAvatar?: string }>('/api/auth/me')
+      .then(data => {
+        setProfile({
+          discordId: data.discordId,
+          discordUsername: data.discordUsername,
+          discordAvatar: buildAvatarUrl(data.discordId, data.discordAvatar),
+        });
+      })
+      .catch(() => setProfile(null))
+      .finally(() => setLoading(false));
   }, []);
 
-  const signIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'discord',
-      options: { redirectTo: window.location.origin, scopes: 'identify' },
-    });
+  const signIn = () => {
+    window.location.href = apiUrl('/api/auth/login');
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ profile, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

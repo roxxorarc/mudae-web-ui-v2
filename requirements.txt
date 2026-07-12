@@ -1,7 +1,9 @@
 fastapi
 uvicorn[standard]
-supabase
 python-dotenv
 discord.py
 pydantic
 httpx
+psycopg[binary]
+psycopg-pool
+PyJWT
